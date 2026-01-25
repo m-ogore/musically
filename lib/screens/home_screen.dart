@@ -79,18 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          return ResponsiveBuilder(
-            builder: (context, sizingInformation) {
-              // Determine layout based on screen size
-              final isMobile = sizingInformation.screenSize.width < 600;
-              
-              if (isMobile) {
-                return _buildListView(hymnProvider);
-              } else {
-                return _buildGridView(hymnProvider, sizingInformation);
-              }
-            },
-          );
+          // Return ListView directly, removing ResponsiveBuilder branch
+          // User requested forced Grid -> List change
+          return _buildListView(hymnProvider);
         },
       ),
     );
