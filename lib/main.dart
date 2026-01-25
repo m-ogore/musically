@@ -19,7 +19,7 @@ class MusicallyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PlayerProvider()),
       ],
       child: MaterialApp(
-        title: 'Musically',
+        title: 'SDA Hymn Mixer',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(

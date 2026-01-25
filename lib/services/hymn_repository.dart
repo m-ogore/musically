@@ -8,25 +8,75 @@ class HymnRepository {
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 300));
     
-    return _sampleHymns;
+    return _generateAllHymns();
   }
 
   /// Gets a hymn by its ID
   Future<Hymn?> getHymnById(String id) async {
     await Future.delayed(const Duration(milliseconds: 100));
     
+    final allHymns = _generateAllHymns();
     try {
-      return _sampleHymns.firstWhere((hymn) => hymn.id == id);
+      return allHymns.firstWhere((hymn) => hymn.id == id);
     } catch (e) {
       return null;
     }
   }
 
-  /// Sample hymns for testing
+  /// Generates the full list of hymns
+  List<Hymn> _generateAllHymns() {
+    final List<Hymn> hymns = [];
+    final specialHymns = {
+      '73': _sampleHymns[2], // Holy, Holy, Holy
+      '86': _sampleHymns[1], // How Great Thou Art
+      '108': _sampleHymns[0], // Amazing Grace
+    };
+
+    // Standard SDA Hymnal has 695 hymns
+    for (int i = 1; i <= 695; i++) {
+      final id = i.toString();
+      if (specialHymns.containsKey(id)) {
+        hymns.add(specialHymns[id]!);
+      } else {
+        hymns.add(_createPlaceholderHymn(id));
+      }
+    }
+    return hymns;
+  }
+
+  Hymn _createPlaceholderHymn(String id) {
+    return Hymn(
+      id: id,
+      title: 'SDA Hymn #$id',
+      author: 'Unknown Author',
+      history: 'History not available.',
+      lyrics: 'Lyrics not available yet.',
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "C",
+        "timeSignature": "4/4",
+        "measures": []
+      }
+      ''',
+      noteTimestamps: [],
+      audioPaths: {
+        'soprano': '',
+        'alto': '',
+        'tenor': '',
+        'bass': '',
+        'instrumental': '',
+      },
+    );
+  }
+
+  /// Sample hymns with full data
   static final List<Hymn> _sampleHymns = [
     Hymn(
-      id: '1',
+      id: '108',
       title: 'Amazing Grace',
+      // ... existing content ...
+
       author: 'John Newton',
       history: '''
 Amazing Grace is a Christian hymn published in 1779, with words written in 1772 by the English poet and Anglican clergyman John Newton (1725–1807).
@@ -112,7 +162,7 @@ Than when we'd first begun.
       },
     ),
     Hymn(
-      id: '2',
+      id: '86',
       title: 'How Great Thou Art',
       author: 'Carl Boberg',
       history: '''
@@ -171,7 +221,7 @@ How great Thou art! How great Thou art!
       },
     ),
     Hymn(
-      id: '3',
+      id: '73',
       title: 'Holy, Holy, Holy',
       author: 'Reginald Heber',
       history: '''
