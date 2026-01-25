@@ -64,7 +64,45 @@ Bright shining as the sun,
 We've no less days to sing God's praise
 Than when we'd first begun.
       '''.trim(),
-      notationUrl: 'assets/notation/amazing_grace.png',
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "G",
+        "timeSignature": "3/4",
+        "measures": [
+          [
+            {"note": "D4", "duration": "quarter"}
+          ],
+          [
+            {"note": "G4", "duration": "half"},
+            {"note": "B4", "duration": "eighth"},
+            {"note": "G4", "duration": "eighth"}
+          ],
+          [
+            {"note": "B4", "duration": "half"},
+            {"note": "A4", "duration": "quarter"}
+          ],
+          [
+            {"note": "G4", "duration": "half"},
+            {"note": "E4", "duration": "quarter"}
+          ],
+          [
+            {"note": "D4", "duration": "half"}
+          ]
+        ]
+      }
+      ''',
+      noteTimestamps: [
+        const Duration(milliseconds: 0),    // D4 (pickup)
+        const Duration(milliseconds: 1000), // G4
+        const Duration(milliseconds: 3000), // B4
+        const Duration(milliseconds: 3500), // G4
+        const Duration(milliseconds: 4000), // B4
+        const Duration(milliseconds: 6000), // A4
+        const Duration(milliseconds: 7000), // G4
+        const Duration(milliseconds: 9000), // E4
+        const Duration(milliseconds: 10000),// D4
+      ],
       audioPaths: {
         'soprano': 'assets/audio/amazing_grace/soprano.mp3',
         'alto': 'assets/audio/amazing_grace/alto.mp3',
@@ -94,44 +132,36 @@ Then sings my soul, my Savior God, to Thee:
 How great Thou art! How great Thou art!
 Then sings my soul, my Savior God, to Thee:
 How great Thou art! How great Thou art!
-
-Verse 2:
-When through the woods and forest glades I wander
-And hear the birds sing sweetly in the trees,
-When I look down from lofty mountain grandeur
-And hear the brook and feel the gentle breeze:
-
-Chorus:
-Then sings my soul, my Savior God, to Thee:
-How great Thou art! How great Thou art!
-Then sings my soul, my Savior God, to Thee:
-How great Thou art! How great Thou art!
-
-Verse 3:
-And when I think that God, His Son not sparing,
-Sent Him to die, I scarce can take it in,
-That on the cross, my burden gladly bearing,
-He bled and died to take away my sin:
-
-Chorus:
-Then sings my soul, my Savior God, to Thee:
-How great Thou art! How great Thou art!
-Then sings my soul, my Savior God, to Thee:
-How great Thou art! How great Thou art!
-
-Verse 4:
-When Christ shall come with shout of acclamation
-And take me home, what joy shall fill my heart!
-Then I shall bow in humble adoration,
-And there proclaim, my God, how great Thou art!
-
-Chorus:
-Then sings my soul, my Savior God, to Thee:
-How great Thou art! How great Thou art!
-Then sings my soul, my Savior God, to Thee:
-How great Thou art! How great Thou art!
       '''.trim(),
-      notationUrl: 'assets/notation/how_great_thou_art.png',
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "C",
+        "timeSignature": "4/4",
+        "measures": [
+          [
+            {"note": "G4", "duration": "quarter"},
+            {"note": "C5", "duration": "quarter"},
+            {"note": "C5", "duration": "quarter"},
+            {"note": "G4", "duration": "quarter"}
+          ],
+          [
+            {"note": "A4", "duration": "quarter"},
+            {"note": "A4", "duration": "half"},
+            {"note": "G4", "duration": "quarter"}
+          ]
+        ]
+      }
+      ''',
+      noteTimestamps: [
+        const Duration(milliseconds: 0),
+        const Duration(milliseconds: 1000),
+        const Duration(milliseconds: 2000),
+        const Duration(milliseconds: 3000),
+        const Duration(milliseconds: 4000),
+        const Duration(milliseconds: 5000),
+        const Duration(milliseconds: 7000),
+      ],
       audioPaths: {
         'soprano': 'assets/audio/how_great_thou_art/soprano.mp3',
         'alto': 'assets/audio/how_great_thou_art/alto.mp3',
@@ -155,26 +185,36 @@ Holy, holy, holy! Lord God Almighty!
 Early in the morning our song shall rise to Thee;
 Holy, holy, holy! Merciful and mighty!
 God in three Persons, blessèd Trinity!
-
-Verse 2:
-Holy, holy, holy! All the saints adore Thee,
-Casting down their golden crowns around the glassy sea;
-Cherubim and seraphim falling down before Thee,
-Which wert, and art, and evermore shalt be.
-
-Verse 3:
-Holy, holy, holy! Though the darkness hide Thee,
-Though the eye of sinful man Thy glory may not see,
-Only Thou art holy; there is none beside Thee
-Perfect in power, in love, and purity.
-
-Verse 4:
-Holy, holy, holy! Lord God Almighty!
-All Thy works shall praise Thy name in earth, and sky, and sea;
-Holy, holy, holy! Merciful and mighty!
-God in three Persons, blessèd Trinity!
       '''.trim(),
-      notationUrl: 'assets/notation/holy_holy_holy.png',
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "D",
+        "timeSignature": "4/4",
+        "measures": [
+          [
+            {"note": "D4", "duration": "quarter"},
+            {"note": "D4", "duration": "quarter"},
+            {"note": "F#4", "duration": "quarter"},
+            {"note": "F#4", "duration": "quarter"}
+          ],
+          [
+            {"note": "A4", "duration": "quarter"},
+            {"note": "A4", "duration": "quarter"},
+            {"note": "A4", "duration": "half"}
+          ]
+        ]
+      }
+      ''',
+      noteTimestamps: [
+        const Duration(milliseconds: 0),
+        const Duration(milliseconds: 1000),
+        const Duration(milliseconds: 2000),
+        const Duration(milliseconds: 3000),
+        const Duration(milliseconds: 4000),
+        const Duration(milliseconds: 5000),
+        const Duration(milliseconds: 6000),
+      ],
       audioPaths: {
         'soprano': 'assets/audio/holy_holy_holy/soprano.mp3',
         'alto': 'assets/audio/holy_holy_holy/alto.mp3',

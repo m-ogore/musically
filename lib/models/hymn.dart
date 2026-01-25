@@ -6,7 +6,8 @@ class Hymn {
   final String author;
   final String history;
   final String lyrics;
-  final String notationUrl;
+  final String notationData;
+  final List<Duration> noteTimestamps;
   final Map<String, String> audioPaths;
 
   const Hymn({
@@ -15,7 +16,8 @@ class Hymn {
     required this.author,
     required this.history,
     required this.lyrics,
-    required this.notationUrl,
+    required this.notationData,
+    required this.noteTimestamps,
     required this.audioPaths,
   });
 
@@ -27,7 +29,10 @@ class Hymn {
       author: json['author'] as String,
       history: json['history'] as String,
       lyrics: json['lyrics'] as String,
-      notationUrl: json['notationUrl'] as String,
+      notationData: json['notationData'] as String,
+      noteTimestamps: (json['noteTimestamps'] as List)
+          .map((e) => Duration(milliseconds: e as int))
+          .toList(),
       audioPaths: Map<String, String>.from(json['audioPaths'] as Map),
     );
   }
@@ -40,7 +45,8 @@ class Hymn {
       'author': author,
       'history': history,
       'lyrics': lyrics,
-      'notationUrl': notationUrl,
+      'notationData': notationData,
+      'noteTimestamps': noteTimestamps.map((e) => e.inMilliseconds).toList(),
       'audioPaths': audioPaths,
     };
   }
@@ -52,7 +58,8 @@ class Hymn {
     String? author,
     String? history,
     String? lyrics,
-    String? notationUrl,
+    String? notationData,
+    List<Duration>? noteTimestamps,
     Map<String, String>? audioPaths,
   }) {
     return Hymn(
@@ -61,7 +68,8 @@ class Hymn {
       author: author ?? this.author,
       history: history ?? this.history,
       lyrics: lyrics ?? this.lyrics,
-      notationUrl: notationUrl ?? this.notationUrl,
+      notationData: notationData ?? this.notationData,
+      noteTimestamps: noteTimestamps ?? this.noteTimestamps,
       audioPaths: audioPaths ?? this.audioPaths,
     );
   }
@@ -76,7 +84,16 @@ class Hymn {
         other.author == author &&
         other.history == history &&
         other.lyrics == lyrics &&
-        other.notationUrl == notationUrl;
+        other.notationData == notationData &&
+        _listEquals(other.noteTimestamps, noteTimestamps);
+  }
+
+  bool _listEquals<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -87,7 +104,8 @@ class Hymn {
       author,
       history,
       lyrics,
-      notationUrl,
+      notationData,
+      Object.hashAll(noteTimestamps),
     );
   }
 

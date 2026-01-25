@@ -47,6 +47,7 @@ dependencies:
   
   # Responsive layout utilities
   responsive_builder: ^0.7.0
+  simple_sheet_music: ^1.0.1
 
 dev_dependencies:
   flutter_test:
