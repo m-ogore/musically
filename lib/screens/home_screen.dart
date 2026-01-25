@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import '../providers/hymn_provider.dart';
 import '../providers/player_provider.dart';
-import '../widgets/hymn_card.dart';
+import '../widgets/hymn_tile.dart';
+import '../delegates/hymn_search_delegate.dart';
 import 'hymn_detail_screen.dart';
 
 /// Home screen displaying all available hymns
@@ -29,9 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Musically'),
+        title: const Text('SDA Hymn Mixer'),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => _openSearch(context),
+            tooltip: 'Search',
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () => _showAboutDialog(context),
@@ -92,19 +98,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildListView(HymnProvider hymnProvider) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
       itemCount: hymnProvider.hymns.length,
       itemBuilder: (context, index) {
         final hymn = hymnProvider.hymns[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: SizedBox(
-            height: 200,
-            child: HymnCard(
-              hymn: hymn,
-              onTap: () => _navigateToDetail(hymn.id),
-            ),
-          ),
+        return HymnTile(
+          hymn: hymn,
+          onTap: () => _navigateToDetail(hymn.id),
         );
       },
     );
@@ -112,27 +111,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildGridView(HymnProvider hymnProvider, SizingInformation sizingInformation) {
     // Determine number of columns based on screen width
-    int crossAxisCount = 2;
-    if (sizingInformation.screenSize.width > 900) {
+    int crossAxisCount = 4; // Denser grid for desktop
+    if (sizingInformation.screenSize.width < 900) {
       crossAxisCount = 3;
+    }
+    if (sizingInformation.screenSize.width < 700) {
+      crossAxisCount = 2; // Tablet portrait
     }
 
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.75,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.5, // More rectangular/compact tiles
       ),
       itemCount: hymnProvider.hymns.length,
       itemBuilder: (context, index) {
         final hymn = hymnProvider.hymns[index];
-        return HymnCard(
+        return HymnGridTile(
           hymn: hymn,
           onTap: () => _navigateToDetail(hymn.id),
         );
       },
+    );
+  }
+
+  void _openSearch(BuildContext context) {
+    final hymnProvider = context.read<HymnProvider>();
+    showSearch(
+      context: context,
+      delegate: HymnSearchDelegate(
+        hymns: hymnProvider.hymns,
+        onHymnSelected: (hymnId) {
+          _navigateToDetail(hymnId);
+        },
+      ),
     );
   }
 

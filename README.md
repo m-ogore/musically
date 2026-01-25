@@ -1,6 +1,6 @@
-# Musically - Multi-Track Hymn Practice App
+# SDA Hymn Mixer - Multi-Track Practice App
 
-A high-performance Flutter application for practicing hymns with individual voice part control, synchronized multi-track audio playback, and responsive design for mobile and tablet devices.
+A high-performance Flutter application for practicing SDA hymns with individual voice part control, synchronized multi-track audio playback, and dynamic music notation.
 
 ## Features
 
@@ -176,24 +176,44 @@ The app uses a sophisticated synchronization system:
 To add a new hymn, edit `lib/services/hymn_repository.dart`:
 
 ```dart
-Hymn(
-  id: '4',
-  title: 'Your Hymn Title',
-  author: 'Composer Name',
-  history: 'Historical background...',
-  lyrics: '''
+    Hymn(
+      id: '4',
+      title: 'Your Hymn Title',
+      author: 'Composer Name',
+      history: 'Historical background...',
+      lyrics: '''
 Verse 1:
 Your lyrics here...
-  ''',
-  notationUrl: 'assets/notation/your_hymn.png',
-  audioPaths: {
-    'soprano': 'assets/audio/your_hymn/soprano.mp3',
-    'alto': 'assets/audio/your_hymn/alto.mp3',
-    'tenor': 'assets/audio/your_hymn/tenor.mp3',
-    'bass': 'assets/audio/your_hymn/bass.mp3',
-    'instrumental': 'assets/audio/your_hymn/instrumental.mp3',
-  },
-),
+      ''',
+      // Dynamic notation data in JSON format
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "C", 
+        "timeSignature": "4/4",
+        "measures": [
+          [
+            {"note": "C4", "duration": "quarter"},
+            {"note": "E4", "duration": "quarter"},
+            {"note": "G4", "duration": "half"}
+          ]
+        ]
+      }
+      ''',
+      // Synchronization timestamps in milliseconds (one per note)
+      noteTimestamps: [
+        const Duration(milliseconds: 0),
+        const Duration(milliseconds: 1000), 
+        const Duration(milliseconds: 2000),
+      ],
+      audioPaths: {
+        'soprano': 'assets/audio/your_hymn/soprano.mp3',
+        'alto': 'assets/audio/your_hymn/alto.mp3',
+        'tenor': 'assets/audio/your_hymn/tenor.mp3',
+        'bass': 'assets/audio/your_hymn/bass.mp3',
+        'instrumental': 'assets/audio/your_hymn/instrumental.mp3',
+      },
+    ),
 ```
 
 ## Building for Production
@@ -255,8 +275,11 @@ This project is created for educational and worship purposes.
 
 - **Flutter Team**: For the amazing framework
 - **just_audio**: For the audio playback engine
-- **Sample Hymns**: Amazing Grace, How Great Thou Art, Holy Holy Holy
+- **Sample Hymns**: 
+  - #108 Amazing Grace
+  - #86 How Great Thou Art
+  - #73 Holy, Holy, Holy
 
 ---
 
-**Note**: This app is a demonstration of multi-track audio synchronization. To use it fully, you must provide your own audio recordings for each voice part.
+**Note**: This app is designed for Seventh-day Adventist worship practice. To use it fully, you must provide your own audio recordings for each voice part.
