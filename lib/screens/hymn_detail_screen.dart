@@ -118,7 +118,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                             )
                           : NotationView(
                               key: const ValueKey('notation'),
-                              notationUrl: hymn.notationUrl,
+                              notationData: hymn.notationData,
+                              noteTimestamps: hymn.noteTimestamps,
                             ),
                     ),
 
