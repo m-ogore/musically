@@ -27,9 +27,13 @@ class HymnRepository {
   List<Hymn> _generateAllHymns() {
     final List<Hymn> hymns = [];
     final specialHymns = {
-      '73': _sampleHymns[2], // Holy, Holy, Holy
-      '86': _sampleHymns[1], // How Great Thou Art
-      '108': _sampleHymns[0], // Amazing Grace
+      '1': _sampleHymns[0], // Praise to the Lord
+      '2': _sampleHymns[1], // All Creatures of Our God and King
+      '3': _sampleHymns[2], // God Himself Is With Us
+      // Keeping existing samples as bonus or removing if replaced?
+      // User specifically asked for 1, 2, 3 to be full.
+      // I will keep the others as available if they don't conflict, 
+      // but re-index sample hymns to match 1, 2, 3.
     };
 
     // Standard SDA Hymnal has 695 hymns
@@ -44,37 +48,197 @@ class HymnRepository {
     return hymns;
   }
 
-  Hymn _createPlaceholderHymn(String id) {
-    return Hymn(
-      id: id,
-      title: 'SDA Hymn #$id',
-      author: 'Unknown Author',
-      history: 'History not available.',
-      lyrics: 'Lyrics not available yet.',
-      notationData: '''
-      {
-        "clef": "treble",
-        "keySignature": "C",
-        "timeSignature": "4/4",
-        "measures": []
-      }
-      ''',
-      noteTimestamps: [],
-      audioPaths: {
-        'soprano': '',
-        'alto': '',
-        'tenor': '',
-        'bass': '',
-        'instrumental': '',
-      },
-    );
-  }
+  // ... _createPlaceholderHymn ...
 
   /// Sample hymns with full data
   static final List<Hymn> _sampleHymns = [
     Hymn(
-      id: '108',
-      title: 'Amazing Grace',
+      id: '1',
+      title: 'Praise to the Lord',
+      author: 'Joachim Neander',
+      history: 'Written by Joachim Neander in 1680. Theme of praise and adoration.',
+      lyrics: '''
+Verse 1:
+Praise to the Lord, the Almighty, the King of creation!
+O my soul, praise Him, for He is thy health and salvation!
+All ye who hear, now to His temple draw near;
+Join me in glad adoration!
+
+Verse 2:
+Praise to the Lord, who o'er all things so wondrously reigneth,
+Shelters thee under His wings, yea, so gently sustaineth!
+Hast thou not seen how thy desires e'er have been
+Granted in what He ordaineth?
+
+Verse 3:
+Praise to the Lord, who doth prosper thy work and defend thee;
+Surely His goodness and mercy here daily attend thee.
+Ponder anew what the Almighty can do,
+If with His love He befriend thee.
+      '''.trim(),
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "F",
+        "timeSignature": "3/4",
+        "measures": [
+          [
+            {"note": "F4", "duration": "quarter"},
+            {"note": "F4", "duration": "quarter"},
+            {"note": "C5", "duration": "quarter"}
+          ],
+          [
+            {"note": "A4", "duration": "quarter"},
+            {"note": "F4", "duration": "quarter"},
+            {"note": "E4", "duration": "quarter"}
+          ],
+          [
+            {"note": "D4", "duration": "quarter"},
+            {"note": "C4", "duration": "half"}
+          ]
+        ]
+      }
+      ''',
+      noteTimestamps: [
+        const Duration(milliseconds: 0),
+        const Duration(milliseconds: 1000),
+        const Duration(milliseconds: 2000),
+        const Duration(milliseconds: 3000),
+        const Duration(milliseconds: 4000),
+        const Duration(milliseconds: 5000),
+        const Duration(milliseconds: 6000),
+        const Duration(milliseconds: 7000),
+      ],
+      audioPaths: {
+        'soprano': 'assets/audio/1/soprano.mp3',
+        'alto': 'assets/audio/1/alto.mp3',
+        'tenor': 'assets/audio/1/tenor.mp3',
+        'bass': 'assets/audio/1/bass.mp3',
+        'instrumental': 'assets/audio/1/instrumental.mp3',
+      },
+    ),
+    Hymn(
+      id: '2',
+      title: 'All Creatures of Our God and King',
+      author: 'St. Francis of Assisi',
+      history: 'Based on Canticle of the Sun by St. Francis of Assisi (1225). Tune: Lasst uns erfreuen.',
+      lyrics: '''
+Verse 1:
+All creatures of our God and King,
+Lift up your voice and with us sing,
+Alleluia! Alleluia!
+Thou burning sun with golden beam,
+Thou silver moon with softer gleam!
+
+Refrain:
+O praise Him! O praise Him!
+Alleluia! Alleluia! Alleluia!
+
+Verse 2:
+Thou rushing wind that art so strong,
+Ye clouds that sail in heaven along,
+O praise Him! Alleluia!
+Thou rising moon, in praise rejoice,
+Ye lights of evening, find a voice!
+      '''.trim(),
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "D",
+        "timeSignature": "3/2",
+        "measures": [
+          [
+            {"note": "D4", "duration": "quarter"},
+            {"note": "D4", "duration": "quarter"},
+            {"note": "E4", "duration": "quarter"},
+            {"note": "F#4", "duration": "quarter"}
+          ],
+          [
+            {"note": "G4", "duration": "half"},
+            {"note": "F#4", "duration": "half"},
+            {"note": "E4", "duration": "half"}
+          ]
+        ]
+      }
+      ''',
+      noteTimestamps: [
+        const Duration(milliseconds: 0),
+        const Duration(milliseconds: 1000),
+        const Duration(milliseconds: 2000),
+        const Duration(milliseconds: 3000),
+        const Duration(milliseconds: 4000),
+        const Duration(milliseconds: 6000),
+        const Duration(milliseconds: 8000),
+      ],
+      audioPaths: {
+        'soprano': 'assets/audio/2/soprano.mp3',
+        'alto': 'assets/audio/2/alto.mp3',
+        'tenor': 'assets/audio/2/tenor.mp3',
+        'bass': 'assets/audio/2/bass.mp3',
+        'instrumental': 'assets/audio/2/instrumental.mp3',
+      },
+    ),
+    Hymn(
+      id: '3',
+      title: 'God Himself Is With Us',
+      author: 'Gerhard Tersteegen',
+      history: 'German hymn from 1729. Tune: Arnsberg.',
+      lyrics: '''
+Verse 1:
+God Himself is with us:
+Let us all adore Him,
+And with awe appear before Him.
+God is here within us;
+Soul, in silence fear Him,
+Humbly, fervently draw near Him.
+Now His own who have known
+God, in worship lowly,
+Yield their spirits wholly.
+
+Verse 2:
+Come, abide within me;
+Let my soul, like Mary,
+Be Thine earthly sanctuary.
+Come, indwelling Spirit,
+With transfigured splendor;
+Love and honor will I render.
+      '''.trim(),
+      notationData: '''
+      {
+        "clef": "treble",
+        "keySignature": "G",
+        "timeSignature": "2/2",
+        "measures": [
+          [
+            {"note": "G4", "duration": "quarter"},
+            {"note": "G4", "duration": "quarter"},
+            {"note": "A4", "duration": "quarter"},
+            {"note": "B4", "duration": "quarter"}
+          ],
+          [
+            {"note": "A4", "duration": "half"},
+            {"note": "G4", "duration": "half"}
+          ]
+        ]
+      }
+      ''',
+      noteTimestamps: [
+        const Duration(milliseconds: 0),
+        const Duration(milliseconds: 1000),
+        const Duration(milliseconds: 2000),
+        const Duration(milliseconds: 3000),
+        const Duration(milliseconds: 4000),
+        const Duration(milliseconds: 6000),
+      ],
+      audioPaths: {
+        'soprano': 'assets/audio/3/soprano.mp3',
+        'alto': 'assets/audio/3/alto.mp3',
+        'tenor': 'assets/audio/3/tenor.mp3',
+        'bass': 'assets/audio/3/bass.mp3',
+        'instrumental': 'assets/audio/3/instrumental.mp3',
+      },
+    ),
+  ];
       // ... existing content ...
 
       author: 'John Newton',
