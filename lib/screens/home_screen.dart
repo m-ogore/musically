@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:responsive_builder/responsive_builder.dart';
+
 import '../providers/hymn_provider.dart';
 import '../providers/player_provider.dart';
 import '../widgets/hymn_tile.dart';
@@ -100,34 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGridView(HymnProvider hymnProvider, SizingInformation sizingInformation) {
-    // Determine number of columns based on screen width
-    int crossAxisCount = 4; // Denser grid for desktop
-    if (sizingInformation.screenSize.width < 900) {
-      crossAxisCount = 3;
-    }
-    if (sizingInformation.screenSize.width < 700) {
-      crossAxisCount = 2; // Tablet portrait
-    }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.5, // More rectangular/compact tiles
-      ),
-      itemCount: hymnProvider.hymns.length,
-      itemBuilder: (context, index) {
-        final hymn = hymnProvider.hymns[index];
-        return HymnGridTile(
-          hymn: hymn,
-          onTap: () => _navigateToDetail(hymn.id),
-        );
-      },
-    );
-  }
 
   void _openSearch(BuildContext context) {
     final hymnProvider = context.read<HymnProvider>();

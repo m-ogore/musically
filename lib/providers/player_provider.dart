@@ -25,6 +25,17 @@ class PlayerProvider with ChangeNotifier {
   Hymn? get currentHymn => _currentHymn;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  /// Current position adjusted by hymn offset (for notation sync)
+  Duration get adjustedPosition {
+    if (_currentHymn == null) return _currentPosition;
+    final shifted = _currentPosition - _currentHymn!.audioOffset;
+    if (shifted.isNegative) return Duration.zero;
+    
+    // Scale the audio position to match notation timestamps
+    final scaledMs = (shifted.inMilliseconds * _currentHymn!.tempoFactor).toInt();
+    return Duration(milliseconds: scaledMs);
+  }
   
   /// Progress as a percentage (0.0 to 1.0)
   double get progress {

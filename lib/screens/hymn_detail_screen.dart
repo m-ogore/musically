@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/hymn_provider.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/notation_view.dart';
-import 'player_screen.dart';
+import '../widgets/playback_header.dart';
+import '../providers/player_provider.dart';
 
 /// Detail screen for viewing a specific hymn
 class HymnDetailScreen extends StatefulWidget {
@@ -22,10 +23,31 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Load the hymn when screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HymnProvider>().selectHymn(widget.hymnId);
+    // Load the hymn data and initialize audio
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final hymnProvider = context.read<HymnProvider>();
+      await hymnProvider.selectHymn(widget.hymnId);
+      
+      if (mounted) {
+        final player = context.read<PlayerProvider>();
+        final hymn = hymnProvider.selectedHymn;
+        if (hymn != null) {
+          await player.initialize();
+          await player.loadHymn(hymn);
+        }
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    // Safely stop playback when leaving the screen
+    try {
+      Provider.of<PlayerProvider>(context, listen: false).stop();
+    } catch (_) {
+      // Background stop if provider is already gone
+    }
+    super.dispose();
   }
 
   @override
@@ -66,7 +88,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
           return CustomScrollView(
             slivers: [
-              // App bar with toggle button
+              // App bar with persistent playback controls
               SliverAppBar(
                 title: Text(hymn.title),
                 pinned: true,
@@ -84,6 +106,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         : 'Show Lyrics',
                   ),
                 ],
+                bottom: const PlaybackHeader(),
               ),
 
               // Content
@@ -106,51 +129,31 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     if (hymn.history.isNotEmpty)
                       _HistorySection(history: hymn.history),
 
-                    const Divider(height: 32),
-
-                    // Lyrics or Notation view
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: hymnProvider.showLyrics
-                          ? LyricsView(
-                              key: const ValueKey('lyrics'),
-                              lyrics: hymn.lyrics,
-                            )
-                          : NotationView(
-                              key: const ValueKey('notation'),
-                              notationData: hymn.notationData,
-                              noteTimestamps: hymn.noteTimestamps,
-                            ),
-                    ),
-
-                    const SizedBox(height: 100), // Space for FAB
+                    const Divider(height: 16),
                   ],
                 ),
               ),
+
+              // Content: Show Lyrics or Notation
+              if (hymnProvider.showLyrics)
+                SliverToBoxAdapter(
+                  child: LyricsView(
+                    key: const ValueKey('lyrics'),
+                    lyrics: hymn.lyrics,
+                  ),
+                )
+              else
+                SliverFillRemaining(
+                  hasScrollBody: true,
+                  child: NotationView(
+                    key: const ValueKey('notation'),
+                    grandStaffData: hymn.grandStaffData ?? '',
+                    systemTimestamps: hymn.systemTimestamps,
+                  ),
+                ),
             ],
           );
         },
-      ),
-      floatingActionButton: Consumer<HymnProvider>(
-        builder: (context, hymnProvider, child) {
-          final hymn = hymnProvider.selectedHymn;
-          if (hymn == null) return const SizedBox.shrink();
-
-          return FloatingActionButton.extended(
-            onPressed: () => _openPlayer(context, hymn),
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Play'),
-          );
-        },
-      ),
-    );
-  }
-
-  void _openPlayer(BuildContext context, hymn) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PlayerScreen(hymn: hymn),
       ),
     );
   }
