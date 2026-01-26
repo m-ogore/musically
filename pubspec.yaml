@@ -48,6 +48,7 @@ dependencies:
   # Responsive layout utilities
   responsive_builder: ^0.7.0
   simple_sheet_music: ^1.0.1
+  flutter_music_notation: ^0.1.0
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +75,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/audio/
+    - assets/audio/1/
     - assets/notation/
 
   # An image asset can refer to one or more resolution-specific "variants", see

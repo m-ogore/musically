@@ -10,7 +10,7 @@ class MixerState {
   });
 
   /// Creates a default MixerState with all tracks at full volume and unmuted
-  factory MixerState.initial() {
+   factory MixerState.initial() {
     return MixerState(
       volumes: {
         'soprano': 1.0,
@@ -20,10 +20,10 @@ class MixerState {
         'instrumental': 1.0,
       },
       mutedTracks: {
-        'soprano': false,
-        'alto': false,
-        'tenor': false,
-        'bass': false,
+        'soprano': true,
+        'alto': true,
+        'tenor': true,
+        'bass': true,
         'instrumental': false,
       },
     );
