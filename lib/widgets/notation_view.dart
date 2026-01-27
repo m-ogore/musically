@@ -3,19 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/player_provider.dart';
-import 'system_widget.dart';
-
-
+import 'vexflow_renderer.dart';
+import '../services/vexflow_converter.dart';
 import '../providers/hymn_provider.dart';
 
 class NotationView extends StatelessWidget {
   final String grandStaffData;
   final List<Duration>? systemTimestamps;
+  final String? musicXmlPath;
 
   const NotationView({
     super.key,
     required this.grandStaffData,
     this.systemTimestamps,
+    this.musicXmlPath,
   });
 
   List<Map<String, dynamic>> _parseSystems(String data) {
@@ -44,6 +45,12 @@ class NotationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // If we have a MusicXML path, load and parse it
+    if (musicXmlPath != null && musicXmlPath!.isNotEmpty) {
+      return _MusicXmlView(musicXmlPath: musicXmlPath!);
+    }
+    
+    // Otherwise, use HymanProvider data
     final hymnProvider = context.watch<HymnProvider>();
     final systems = _parseSystems(grandStaffData);
 
@@ -56,11 +63,11 @@ class NotationView extends StatelessWidget {
         Expanded(
           child: hymnProvider.notationMode == NotationViewMode.lineByLine
               ? _LineByLineView(
-                  systems: systems,
+                  data: jsonDecode(grandStaffData),
                   systemTimestamps: systemTimestamps,
                   scrollMode: hymnProvider.scrollMode,
                 )
-              : _FullSheetView(systems: systems),
+              : _FullSheetView(data: jsonDecode(grandStaffData)),
         ),
       ],
     );
@@ -68,12 +75,12 @@ class NotationView extends StatelessWidget {
 }
 
 class _LineByLineView extends StatefulWidget {
-  final List<Map<String, dynamic>> systems;
+  final Map<String, dynamic> data;
   final List<Duration>? systemTimestamps;
   final ScrollMode scrollMode;
 
   const _LineByLineView({
-    required this.systems,
+    required this.data,
     this.systemTimestamps,
     required this.scrollMode,
   });
@@ -129,7 +136,7 @@ class _LineByLineViewState extends State<_LineByLineView> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Text(
-            'Line ${_currentPage + 1} of ${widget.systems.length}',
+            'Line ${_currentPage + 1} of ${(widget.data['systems'] as List).length}',
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
         ),
@@ -140,17 +147,14 @@ class _LineByLineViewState extends State<_LineByLineView> {
             onPageChanged: (index) {
               setState(() => _currentPage = index);
             },
-            itemCount: widget.systems.length,
+            itemCount: (widget.data['systems'] as List).length,
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.all(12),
-                child: SystemWidget(
-                  systemData: widget.systems[index],
-                  isFirstSystem: true, // Always show time/key sig in Line-by-Line mode
-                  highlight: index == _currentPage,
-                  currentPosition: player.adjustedPosition,
-                  showBorder: true,
-                  showBackground: true,
+                child: VexFlowRenderer(
+                  data: widget.data,
+                  singleSystem: true,
+                  systemIndex: index,
                 ),
               );
             },
@@ -162,39 +166,71 @@ class _LineByLineViewState extends State<_LineByLineView> {
 }
 
 class _FullSheetView extends StatelessWidget {
-  final List<Map<String, dynamic>> systems;
+  final Map<String, dynamic> data;
 
-  const _FullSheetView({required this.systems});
+  const _FullSheetView({required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final player = context.watch<PlayerProvider>();
+    return VexFlowRenderer(data: data);
+  }
+}
+
+class _MusicXmlView extends StatefulWidget {
+  final String musicXmlPath;
+  
+  const _MusicXmlView({required this.musicXmlPath});
+  
+  @override
+  State<_MusicXmlView> createState() => _MusicXmlViewState();
+}
+
+class _MusicXmlViewState extends State<_MusicXmlView> {
+  Map<String, dynamic>? _renderData;
+  bool _isLoading = true;
+  String? _error;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+  
+  Future<void> _loadData() async {
+    try {
+      final xmlContent = await DefaultAssetBundle.of(context).loadString(widget.musicXmlPath);
+      final converter = VexFlowConverter();
+      final data = converter.fromMusicXML(xmlContent);
+      if (mounted) {
+        setState(() {
+          _renderData = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load XML: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     
-    return InteractiveViewer(
-      minScale: 0.2,
-      maxScale: 4.0,
-      clipBehavior: Clip.none,
-      boundaryMargin: const EdgeInsets.symmetric(vertical: 200, horizontal: 50),
-      constrained: false,
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          children: systems.asMap().entries.map((entry) {
-            final index = entry.key;
-            final data = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 48),
-              child: SystemWidget(
-                systemData: data,
-                isFirstSystem: index == 0,
-                currentPosition: player.adjustedPosition,
-                showBorder: false,
-                showBackground: false,
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
+    if (_error != null) {
+      return Center(child: Text(_error!, style: const TextStyle(color: Colors.red)));
+    }
+    
+    if (_renderData == null) {
+      return const Center(child: Text('No data found'));
+    }
+    
+    return VexFlowRenderer(data: _renderData!);
   }
 }
