@@ -4,12 +4,13 @@ import '../providers/player_provider.dart';
 import '../utils/constants.dart';
 
 import '../providers/hymn_provider.dart';
+import 'mixer_bottom_sheet.dart';
 
 class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
   const PlaybackHeader({super.key});
 
   @override
-  Size get preferredSize => const Size.fromHeight(130);
+  Size get preferredSize => const Size.fromHeight(150);
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +98,16 @@ class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 8),
                 _VoiceToggle(label: 'Piano', trackName: AppConstants.instrumentalTrack, color: AppConstants.trackColors[AppConstants.instrumentalTrack]!),
                 
+                const SizedBox(width: 16),
+                const VerticalDivider(width: 1),
+                const SizedBox(width: 16),
+                
+                // Mixer / Volume Controls
+                IconButton(
+                  icon: Icon(Icons.tune, color: theme.colorScheme.primary),
+                  onPressed: () => MixerBottomSheet.show(context),
+                  tooltip: 'Volume Mixer',
+                ),
                 if (hymnProvider.showNotation) ...[
                   const SizedBox(width: 16),
                   const VerticalDivider(width: 1),

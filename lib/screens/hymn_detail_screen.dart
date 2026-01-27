@@ -4,6 +4,7 @@ import '../providers/hymn_provider.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/notation_view.dart';
 import '../widgets/playback_header.dart';
+import '../widgets/numeric_keypad.dart';
 import '../providers/player_provider.dart';
 
 /// Detail screen for viewing a specific hymn
@@ -20,6 +21,8 @@ class HymnDetailScreen extends StatefulWidget {
 }
 
 class _HymnDetailScreenState extends State<HymnDetailScreen> {
+  bool _showKeypad = false;
+
   @override
   void initState() {
     super.initState();
@@ -52,12 +55,14 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Consumer<HymnProvider>(
-        builder: (context, hymnProvider, child) {
-          if (hymnProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return Consumer<HymnProvider>(
+      builder: (context, hymnProvider, child) {
+        return Scaffold(
+          body: Builder(
+            builder: (context) {
+              if (hymnProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
           if (hymnProvider.error != null) {
             return Center(
@@ -149,11 +154,73 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     key: const ValueKey('notation'),
                     grandStaffData: hymn.grandStaffData ?? '',
                     systemTimestamps: hymn.systemTimestamps,
+                    musicXmlPath: hymn.musicXmlPath,
                   ),
                 ),
             ],
           );
         },
+      ),
+      bottomNavigationBar: hymnProvider.showLyrics
+          ? _buildBottomKeypad(hymnProvider)
+          : null,
+    );
+      },
+    );
+  }
+
+  Widget _buildBottomKeypad(HymnProvider hymnProvider) {
+    if (_showKeypad) {
+      return NumericKeypad(
+        onHymnSelected: (number) async {
+          // Attempt to find hymn
+          final hymnExists = hymnProvider.hymns.any((h) => h.id == number);
+          if (hymnExists) {
+            await hymnProvider.selectHymn(number);
+            if (mounted) {
+              final player = context.read<PlayerProvider>();
+              await player.loadHymn(hymnProvider.selectedHymn!);
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Hymn #$number not found')),
+              );
+            }
+          }
+        },
+        onClose: () => setState(() => _showKeypad = false),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16, 
+        8, 
+        16, 
+        8 + MediaQuery.of(context).padding.bottom
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Search by number...',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          FloatingActionButton.small(
+            onPressed: () => setState(() => _showKeypad = true),
+            child: const Icon(Icons.dialpad),
+          ),
+        ],
       ),
     );
   }

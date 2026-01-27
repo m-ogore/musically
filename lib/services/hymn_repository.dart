@@ -323,6 +323,7 @@ If with His love He befriend thee.
       ],
       audioOffset: const Duration(seconds: 15),
       tempoFactor: 1.2,
+      musicXmlPath: 'assets/notation/1.xml',
     );
   }
 

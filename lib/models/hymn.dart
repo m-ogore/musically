@@ -9,6 +9,7 @@ class Hymn {
   final String lyrics;
   final String notationData; // Legacy field, kept for backward compatibility if needed
   final String? grandStaffData; // New field for Grand Staff (List of Systems)
+  final String? musicXmlPath; // Path to MusicXML file for Canvas rendering
   final List<Duration> noteTimestamps; // Note-level sync (bouncing ball)
   final List<Duration>? systemTimestamps; // System-level sync (page turns)
   final Map<String, String> audioPaths;
@@ -24,6 +25,7 @@ class Hymn {
     required this.lyrics,
     required this.notationData,
     this.grandStaffData,
+    this.musicXmlPath,
     required this.noteTimestamps,
     this.systemTimestamps,
     required this.audioPaths,
@@ -42,6 +44,7 @@ class Hymn {
       lyrics: json['lyrics'] as String,
       notationData: json['notationData'] as String,
       grandStaffData: json['grandStaffData'] as String?,
+      musicXmlPath: json['musicXmlPath'] as String?,
       noteTimestamps: (json['noteTimestamps'] as List)
           .map((e) => Duration(milliseconds: e as int))
           .toList(),
@@ -65,6 +68,7 @@ class Hymn {
       'lyrics': lyrics,
       'notationData': notationData,
       'grandStaffData': grandStaffData,
+      'musicXmlPath': musicXmlPath,
       'noteTimestamps': noteTimestamps.map((e) => e.inMilliseconds).toList(),
       'systemTimestamps': systemTimestamps?.map((e) => e.inMilliseconds).toList(),
       'audioPaths': audioPaths,
@@ -83,6 +87,7 @@ class Hymn {
     String? lyrics,
     String? notationData,
     String? grandStaffData,
+    String? musicXmlPath,
     List<Duration>? noteTimestamps,
     List<Duration>? systemTimestamps,
     Map<String, String>? audioPaths,
@@ -98,6 +103,7 @@ class Hymn {
       lyrics: lyrics ?? this.lyrics,
       notationData: notationData ?? this.notationData,
       grandStaffData: grandStaffData ?? this.grandStaffData,
+      musicXmlPath: musicXmlPath ?? this.musicXmlPath,
       noteTimestamps: noteTimestamps ?? this.noteTimestamps,
       systemTimestamps: systemTimestamps ?? this.systemTimestamps,
       audioPaths: audioPaths ?? this.audioPaths,
