@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/hymn_provider.dart';
 import 'providers/player_provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 import 'screens/home_screen.dart';
 
@@ -44,7 +43,9 @@ class MusicallyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF6750A4),
             brightness: Brightness.dark,
+            surface: Colors.black,
           ),
+          scaffoldBackgroundColor: Colors.black,
           useMaterial3: true,
           cardTheme: const CardThemeData(
             elevation: 2,
@@ -55,6 +56,7 @@ class MusicallyApp extends StatelessWidget {
           appBarTheme: const AppBarTheme(
             centerTitle: false,
             elevation: 0,
+            backgroundColor: Colors.black,
           ),
         ),
         themeMode: ThemeMode.system,

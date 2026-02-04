@@ -108,25 +108,6 @@ class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
                   onPressed: () => MixerBottomSheet.show(context),
                   tooltip: 'Volume Mixer',
                 ),
-                if (hymnProvider.showNotation) ...[
-                  const SizedBox(width: 16),
-                  const VerticalDivider(width: 1),
-                  const SizedBox(width: 16),
-                  // Notation Mode
-                  _ModeToggle<NotationViewMode>(
-                    value: NotationViewMode.lineByLine,
-                    groupValue: hymnProvider.notationMode,
-                    icon: Icons.view_carousel,
-                    onTap: () => hymnProvider.setNotationMode(NotationViewMode.lineByLine),
-                  ),
-                  const SizedBox(width: 8),
-                  _ModeToggle<NotationViewMode>(
-                    value: NotationViewMode.fullSheet,
-                    groupValue: hymnProvider.notationMode,
-                    icon: Icons.vertical_split,
-                    onTap: () => hymnProvider.setNotationMode(NotationViewMode.fullSheet),
-                  ),
-                ],
               ],
             ),
           ),
@@ -186,45 +167,3 @@ class _VoiceToggle extends StatelessWidget {
     );
   }
 }
-
-class _ModeToggle<T> extends StatelessWidget {
-  final T value;
-  final T groupValue;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _ModeToggle({
-    required this.value,
-    required this.groupValue,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isSelected = value == groupValue;
-    final theme = Theme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline,
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: isSelected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurface,
-        ),
-      ),
-    );
-  }
-}
-

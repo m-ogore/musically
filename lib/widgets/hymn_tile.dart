@@ -33,13 +33,19 @@ class HymnTile extends StatelessWidget {
           ),
         ),
       ),
-      title: Text(
-        hymn.title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
+      title: Hero(
+        tag: 'title-${hymn.id}',
+        child: Material(
+          type: MaterialType.transparency,
+          child: Text(
+            hymn.title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
         hymn.author,
@@ -99,13 +105,19 @@ class HymnGridTile extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Text(
-                hymn.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Hero(
+                tag: 'title-${hymn.id}',
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Text(
+                    hymn.title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
               Text(

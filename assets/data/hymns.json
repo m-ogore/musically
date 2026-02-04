@@ -1,0 +1,123 @@
+[
+  {
+    "id": "1",
+    "hymnNumber": "1",
+    "title": "Praise to the Lord",
+    "author": "Joachim Neander",
+    "lyrics": "Verse 1:\nPraise to the Lord, the Almighty, the King of creation!\nO my soul, praise Him, for He is thy health and salvation!\nAll ye who hear, now to His temple draw near;\nJoin me in glad adoration!\n\nVerse 2:\nPraise to the Lord, who o'er all things so wondrously reigneth,\nShelters thee under His wings, yea, so gently sustaineth!\nHast thou not seen how thy desires e'er have been\nGranted in what He ordaineth?\n\nVerse 3:\nPraise to the Lord, who doth prosper thy work and defend thee;\nSurely His goodness and mercy here daily attend thee.\nPonder anew what the Almighty can do,\nIf with His love He befriend thee.",
+    "history": "Written in 1680 by Joachim Neander.",
+    "systemTimestamps": [
+      0,
+      12000,
+      22000,
+      34000,
+      43000,
+      49000
+    ],
+    "audioOffset": 15000,
+    "tempoFactor": 1.2,
+    "hasAudio": true,
+    "hasMusicXml": true
+  },
+  {
+    "id": "2",
+    "hymnNumber": "2",
+    "title": "All Creatures of Our God and King",
+    "author": "St. Francis of Assisi",
+    "lyrics": "Verse 1:\nAll creatures of our God and King,\nLift up your voice and with us sing:\nAlleluia! Alleluia!\nO burning sun with golden beam,\nAnd silver moon with softer gleam!\n\nRefrain:\nO praise Him! O praise Him!\nAlleluia! Alleluia! Alleluia!\n\nVerse 2:\nO rushing wind and breezes soft,\nO clouds that ride the winds aloft:\nO praise Him! Alleluia!\nO rising morn, in praise rejoice,\nO lights of evening, find a voice!\n\nVerse 3:\nO flowing waters, pure and clear,\nMake music for your Lord to hear,\nO praise Him! Alleluia!\nO fire so masterful and bright,\nProviding us with warmth and light.",
+    "history": "Based on Canticle of the Sun by St. Francis of Assisi (1225).",
+    "systemTimestamps": [
+      0,
+      12000,
+      22000,
+      32000
+    ],
+    "hasAudio": true,
+    "hasMusicXml": true
+  },
+  {
+    "id": "3",
+    "hymnNumber": "3",
+    "title": "God Himself Is With Us",
+    "author": "Gerhard Tersteegen",
+    "lyrics": "Verse 1:\nGod Himself is with us;\nLet us all adore Him,\nAnd with awe appear before Him.\nGod is here within us;\nSoul in silence fear Him,\nHumbly, fervently draw near Him.\nNow His own who have known God,\nIn worship lowly,\nYield their spirits wholly.\n\nVerse 2:\nCome, abide within me;\nLet my soul, like Mary,\nBe Thine earthly sanctuary.\nCome, indwelling Spirit,\nWith transfigured splendor;\nLove and honor will I render.\nWhere I go here below,\nLet me bow before Thee,\nKnow Thee and adore Thee.",
+    "history": "German hymn from 1729 by Gerhard Tersteegen.",
+    "systemTimestamps": [
+      0,
+      8000,
+      16000
+    ],
+    "hasAudio": true,
+    "hasMusicXml": true
+  },
+  {
+    "id": "4",
+    "hymnNumber": "4",
+    "title": "Praise, My Soul, the King of Heaven",
+    "author": "Henry Francis Lyte",
+    "lyrics": "Verse 1:\nPraise, my soul, the King of heaven;\nTo His feet thy tribute bring;\nRansomed, healed, restored, forgiven,\nWho like thee His praise should sing?\nPraise Him, praise Him, alleluia!\nPraise the everlasting King.\n\nVerse 2:\nPraise Him for His grace and favor\nTo our fathers in distress;\nPraise Him, still the same forever,\nSlow to chide, and swift to bless;\nPraise Him, praise Him, alleluia!\nGlorious in His faithfulness.\n\nVerse 3:\nTenderly He shields and spares us;\nWell our feeble frame He knows;\nIn His hands He gently bears us,\nRescues us from all our foes.\nPraise Him, praise Him, alleluia!\nWidely as His mercy flows.",
+    "history": "Written in 1834 by Henry Francis Lyte.",
+    "hasAudio": false,
+    "hasMusicXml": false
+  },
+  {
+    "id": "5",
+    "hymnNumber": "5",
+    "title": "All My Hope on God Is Founded",
+    "author": "Joachim Neander",
+    "lyrics": "Verse 1:\nAll my hope on God is founded;\nHe doth still my trust renew.\nMe through change and chance He guideth,\nOnly good and only true.\nGod unknown, He alone\nCalls my heart to be His own.\n\nVerse 2:\nPride of man and earthly glory,\nSword and crown betray his trust;\nWhat with care and toil he buildeth,\nTower and temple fall to dust.\nBut God's power, hour by hour,\nIs my temple and my tower.\n\nVerse 3:\nGod's great goodness aye endureth,\nDeep His wisdom, passing thought:\nSplendor, light, and life attend Him,\nBeauty springeth out of naught.\nLove doth stand at His hand;\nJoy doth wait on His command.",
+    "history": "Based on a German hymn by Joachim Neander (1680).",
+    "hasAudio": false,
+    "hasMusicXml": false
+  },
+  {
+    "id": "6",
+    "hymnNumber": "6",
+    "title": "O Worship the Lord",
+    "author": "John S. B. Monsell",
+    "lyrics": "Verse 1:\nO worship the Lord in the beauty of holiness,\nBow down before Him, His glory proclaim;\nWith gold of obedience, and incense of lowliness,\nKneel and adore Him: the Lord is His name.\n\nVerse 2:\nLow at His feet lay thy burden of carefulness,\nHigh on His heart He will bear it for thee,\nComfort thy sorrows, and answer thy prayerfulness,\nGuiding thy steps as may best for thee be.\n\nVerse 3:\nFear not to enter His courts in the slenderness\nOf the poor wealth thou wouldst reckon as thine;\nTruth in its beauty, and love in its tenderness,\nThese are the offerings to lay on His shrine.",
+    "history": "Written in 1861 by John S. B. Monsell.",
+    "hasAudio": false,
+    "hasMusicXml": false
+  },
+  {
+    "id": "7",
+    "hymnNumber": "7",
+    "title": "The Lord in Zion Reigneth",
+    "author": "Fanny J. Crosby",
+    "lyrics": "Verse 1:\nThe Lord in Zion reigneth,\nLet all the world rejoice,\nAnd come before His throne of grace\nWith cheerful heart and voice;\nThe Lord in Zion reigneth,\nAnd He will ever be\nOur Shepherd and our Counselor,\nThrough all eternity.",
+    "history": "Written by Fanny J. Crosby.",
+    "hasAudio": false,
+    "hasMusicXml": false
+  },
+  {
+    "id": "8",
+    "hymnNumber": "8",
+    "title": "We Gather Together",
+    "author": "Anonymous (Dutch folk hymn)",
+    "lyrics": "Verse 1:\nWe gather together to ask the Lord's blessing;\nHe chastens and hastens His will to make known;\nThe wicked oppressing now cease from distressing,\nSing praises to His name; He forgets not His own.\n\nVerse 2:\nBeside us to guide us, our God with us joining,\nOrdaining, maintaining His kingdom divine;\nSo from the beginning the fight we were winning;\nThou, Lord, wast at our side; all glory be Thine!",
+    "history": "Dutch folk hymn, written circa 1625.",
+    "hasAudio": false,
+    "hasMusicXml": false
+  },
+  {
+    "id": "9",
+    "hymnNumber": "9",
+    "title": "Let All the World in Every Corner Sing",
+    "author": "George Herbert",
+    "lyrics": "Verse 1:\nLet all the world in every corner sing,\nMy God and King!\nThe heavens are not too high,\nHis praise may thither fly;\nThe earth is not too low,\nHis praises there may grow.",
+    "history": "Written by George Herbert (1633).",
+    "hasAudio": false,
+    "hasMusicXml": false
+  },
+  {
+    "id": "10",
+    "hymnNumber": "10",
+    "title": "Come, Christians, Join to Sing",
+    "author": "Christian Henry Bateman",
+    "lyrics": "Verse 1:\nCome, Christians, join to sing\nAlleluia! Amen!\nLoud praise to Christ our King;\nAlleluia! Amen!\nLet all, with heart and voice,\nBefore His throne rejoice;\nPraise is His gracious choice.\nAlleluia! Amen!",
+    "history": "Written in 1843 by Christian Henry Bateman.",
+    "hasAudio": true,
+    "hasMusicXml": true
+  }
+]

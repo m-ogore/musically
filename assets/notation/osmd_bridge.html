@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSMD Renderer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            width: 100vw;
+        }
+
+        body.dark-mode {
+            background-color: #000000;
+        }
+
+        body.light-mode {
+            background-color: #ffffff;
+        }
+
+        #osmd-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #error-display {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 16px;
+            margin: 10px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+    </style>
+    <script src="../js/opensheetmusicdisplay.min.js"></script>
+</head>
+
+<body>
+    <div id="error-display"></div>
+    <div id="osmd-container"></div>
+
+    <script>
+        let osmd;
+        let cursor;
+        const container = document.getElementById('osmd-container');
+
+        async function initOSMD(options = {}) {
+            try {
+                osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(container, {
+                    autoResize: options.autoResize ?? true,
+                    drawTitle: options.drawTitle ?? false,
+                    drawSubtitle: false,
+                    drawComposer: false,
+                    drawLyrics: true,
+                    drawPartNames: true,
+                    renderingBackend: "svg",
+                    coloringEnabled: true,
+                    defaultColorMusic: options.darkMode ? "#FFFFFF" : "#000000",
+                    ...options
+                });
+                console.log("OSMD Initialized");
+            } catch (err) {
+                showError("Initialization failed", err.message);
+            }
+        }
+
+        async function renderXML(xmlString, darkMode = false, zoom = 1.0) {
+            if (!osmd) {
+                await initOSMD({ darkMode });
+            }
+
+            try {
+                document.body.className = darkMode ? 'dark-mode' : 'light-mode';
+                osmd.setOptions({
+                    defaultColorMusic: darkMode ? "#FFFFFF" : "#000000",
+                    defaultColorLabel: darkMode ? "#FFFFFF" : "#000000",
+                    zoom: zoom
+                });
+
+                await osmd.load(xmlString);
+                osmd.render();
+
+                // Initialize cursor for highlighting
+                cursor = osmd.cursor;
+                cursor.show();
+                console.log("OSMD Rendered with cursor at zoom " + zoom);
+            } catch (err) {
+                showError("Rendering failed", err.message);
+            }
+        }
+
+        function showError(message, details) {
+            const display = document.getElementById('error-display');
+            display.style.display = 'block';
+            display.innerHTML = `<strong>OSMD Error:</strong> ${message}<br><small>${details || ''}</small>`;
+            console.error(message, details);
+        }
+
+        // Apply theme without re-rendering if possible
+        function setTheme(darkMode) {
+            document.body.className = darkMode ? 'dark-mode' : 'light-mode';
+            if (osmd) {
+                osmd.setOptions({
+                    defaultColorMusic: darkMode ? "#FFFFFF" : "#000000",
+                    defaultColorLabel: darkMode ? "#FFFFFF" : "#000000",
+                });
+                osmd.render();
+            }
+        }
+
+        function updateCursor(timestampMs) {
+            if (!cursor || !osmd) return;
+            try {
+                cursor.show();
+                cursor.next();
+            } catch (err) {
+                console.error("Cursor update failed", err);
+            }
+        }
+
+        function resetCursor() {
+            if (!cursor) return;
+            cursor.reset();
+            cursor.show();
+        }
+
+        window.updateCursor = updateCursor;
+        window.resetCursor = resetCursor;
+    </script>
+</body>
+
+</html>
