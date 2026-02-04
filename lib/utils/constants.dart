@@ -36,7 +36,8 @@ class AppConstants {
   };
 
   // Audio synchronization
-  static const Duration syncTolerance = Duration(milliseconds: 50);
+  static const Duration syncTolerance = Duration(milliseconds: 30);
+  static const Duration hardSyncTolerance = Duration(milliseconds: 200);
   static const Duration syncCheckInterval = Duration(milliseconds: 100);
 
   // Responsive breakpoints

@@ -81,28 +81,17 @@ flutter pub get
 
 The app requires 5 separate audio files for each hymn. You need to provide these files:
 
-For each hymn, create the following audio files:
+For each hymn, create a folder with the Hymn Number (ID) and add the 5 tracks:
 ```
-assets/audio/amazing_grace/
+assets/audio/1/
   ├── soprano.mp3
   ├── alto.mp3
   ├── tenor.mp3
   ├── bass.mp3
   └── instrumental.mp3
 
-assets/audio/how_great_thou_art/
-  ├── soprano.mp3
-  ├── alto.mp3
-  ├── tenor.mp3
-  ├── bass.mp3
-  └── instrumental.mp3
-
-assets/audio/holy_holy_holy/
-  ├── soprano.mp3
-  ├── alto.mp3
-  ├── tenor.mp3
-  ├── bass.mp3
-  └── instrumental.mp3
+assets/audio/2/
+  ├── ...
 ```
 
 **Audio File Requirements:**
@@ -171,50 +160,44 @@ The app uses a sophisticated synchronization system:
 - **Tablet** (600-900px): 2-column grid
 - **Desktop** (> 900px): 3-column grid
 
-## Adding New Hymns
+## Adding New Hymns ➕
 
-To add a new hymn, edit `lib/services/hymn_repository.dart`:
+The app uses a **data-driven system**, so you don't need to write any code to add new hymns.
 
-```dart
-    Hymn(
-      id: '4',
-      title: 'Your Hymn Title',
-      author: 'Composer Name',
-      history: 'Historical background...',
-      lyrics: '''
-Verse 1:
-Your lyrics here...
-      ''',
-      // Dynamic notation data in JSON format
-      notationData: '''
-      {
-        "clef": "treble",
-        "keySignature": "C", 
-        "timeSignature": "4/4",
-        "measures": [
-          [
-            {"note": "C4", "duration": "quarter"},
-            {"note": "E4", "duration": "quarter"},
-            {"note": "G4", "duration": "half"}
-          ]
-        ]
-      }
-      ''',
-      // Synchronization timestamps in milliseconds (one per note)
-      noteTimestamps: [
-        const Duration(milliseconds: 0),
-        const Duration(milliseconds: 1000), 
-        const Duration(milliseconds: 2000),
-      ],
-      audioPaths: {
-        'soprano': 'assets/audio/your_hymn/soprano.mp3',
-        'alto': 'assets/audio/your_hymn/alto.mp3',
-        'tenor': 'assets/audio/your_hymn/tenor.mp3',
-        'bass': 'assets/audio/your_hymn/bass.mp3',
-        'instrumental': 'assets/audio/your_hymn/instrumental.mp3',
-      },
-    ),
+### 1. Add Audio Files 🎧
+Create a new folder in `assets/audio/` with the hymn number (ID).
+Inside, add the 5 voice tracks:
 ```
+assets/audio/4/
+  ├── soprano.mp3
+  ├── alto.mp3
+  ├── tenor.mp3
+  ├── bass.mp3
+  └── instrumental.mp3
+```
+
+### 2. Add Notation File 🎼
+Add the MusicXML file to `assets/notation/` with the hymn ID:
+```
+assets/notation/4.xml
+```
+
+### 3. Update the Manifest 📝
+Edit `assets/data/hymns.json` and add a new entry:
+```json
+  {
+    "id": "4",
+    "hymnNumber": "4",
+    "title": "My New Hymn",
+    "author": "Composer Name",
+    "lyrics": "Verse 1:\nLyrics go here...",
+    "history": "Written in...",
+    "hasAudio": true,
+    "hasMusicXml": true
+  }
+```
+
+That's it! Restart the app, and Hymn #4 will be available.
 
 ## Building for Production
 

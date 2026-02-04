@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import '../models/hymn.dart';
 import '../services/hymn_repository.dart';
 
-enum NotationViewMode { lineByLine, fullSheet }
 enum ScrollMode { manual, audioSync }
+enum HighlightMode { individual, chord }
 
 /// Provider for managing hymn data and view state
 class HymnProvider with ChangeNotifier {
@@ -14,8 +14,9 @@ class HymnProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _showLyrics = true; // true for lyrics, false for notation
-  NotationViewMode _notationMode = NotationViewMode.fullSheet;
   ScrollMode _scrollMode = ScrollMode.audioSync;
+  bool _highlightingEnabled = true;
+  HighlightMode _highlightMode = HighlightMode.individual;
 
   // Getters
   List<Hymn> get hymns => _hymns;
@@ -24,8 +25,9 @@ class HymnProvider with ChangeNotifier {
   String? get error => _error;
   bool get showLyrics => _showLyrics;
   bool get showNotation => !_showLyrics;
-  NotationViewMode get notationMode => _notationMode;
   ScrollMode get scrollMode => _scrollMode;
+  bool get highlightingEnabled => _highlightingEnabled;
+  HighlightMode get highlightMode => _highlightMode;
 
   /// Loads all hymns from the repository
   Future<void> loadHymns() async {
@@ -77,15 +79,21 @@ class HymnProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sets the notation view mode (Line by Line or Full Sheet)
-  void setNotationMode(NotationViewMode mode) {
-    _notationMode = mode;
-    notifyListeners();
-  }
-
   /// Sets the scroll mode (Manual or Auto Sync)
   void setScrollMode(ScrollMode mode) {
     _scrollMode = mode;
+    notifyListeners();
+  }
+
+  /// Toggles note highlighting on/off
+  void toggleHighlighting() {
+    _highlightingEnabled = !_highlightingEnabled;
+    notifyListeners();
+  }
+
+  /// Sets the highlight mode (Individual or Chord)
+  void setHighlightMode(HighlightMode mode) {
+    _highlightMode = mode;
     notifyListeners();
   }
 

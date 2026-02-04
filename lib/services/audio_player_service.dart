@@ -116,15 +116,15 @@ class AudioPlayerService {
     // Get the current position from primary player
     final position = _primaryPlayer!.position;
     
-    // Seek all players to the same position
+    // 1. Prepare/Seek all players in parallel
     await Future.wait(
       _players.values.map((player) => player.seek(position)),
     );
     
-    // Start all players simultaneously
-    await Future.wait(
-      _players.values.map((player) => player.play()),
-    );
+    // 2. Optimized fire: trigger all play commands as fast as possible
+    // We don't await each one individually to minimize inter-track latency
+    final playFutures = _players.values.map((player) => player.play()).toList();
+    await Future.wait(playFutures);
     
     // Start monitoring synchronization
     _startSyncMonitoring();
@@ -154,7 +154,7 @@ class AudioPlayerService {
   Future<void> seek(Duration position) async {
     if (_players.isEmpty) return;
     
-    // Seek all players to the same position
+    // Seek all players to the same position in parallel
     await Future.wait(
       _players.values.map((player) => player.seek(position)),
     );
@@ -175,10 +175,7 @@ class AudioPlayerService {
 
   /// Sets the volume for a specific track
   Future<void> setTrackVolume(String trackName, double volume) async {
-    // Update mixer state
     _mixerState = _mixerState.setVolume(trackName, volume);
-    
-    // Apply to player
     final player = _players[trackName];
     if (player != null) {
       final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
@@ -188,10 +185,7 @@ class AudioPlayerService {
 
   /// Toggles mute for a specific track
   Future<void> toggleMute(String trackName) async {
-    // Update mixer state
     _mixerState = _mixerState.toggleMute(trackName);
-    
-    // Apply to player
     final player = _players[trackName];
     if (player != null) {
       final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
@@ -201,10 +195,7 @@ class AudioPlayerService {
 
   /// Sets mute state for a specific track
   Future<void> setMute(String trackName, bool muted) async {
-    // Update mixer state
     _mixerState = _mixerState.setMute(trackName, muted);
-    
-    // Apply to player
     final player = _players[trackName];
     if (player != null) {
       final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
@@ -226,51 +217,37 @@ class AudioPlayerService {
 
   /// Checks if tracks are in sync and resyncs if necessary
   Future<void> _checkAndResync(Duration primaryPosition) async {
-    bool needsResync = false;
-    
     // Check each player against the primary player
     for (final entry in _players.entries) {
       final trackName = entry.key;
       final player = entry.value;
       
-      // Skip the primary player
       if (player == _primaryPlayer) continue;
       
-      // Calculate drift
       final drift = (player.position - primaryPosition).abs();
       
-      // Check if drift exceeds tolerance
-      if (drift > AppConstants.syncTolerance) {
-        needsResync = true;
-        debugPrint('Track $trackName drifted by ${drift.inMilliseconds}ms');
-        break;
+      // If drift is catastrophic, do a full hard resync (disruptive)
+      if (drift > AppConstants.hardSyncTolerance) {
+        debugPrint('CRITICAL: Track $trackName drifted by ${drift.inMilliseconds}ms. Hard Resync.');
+        await _resyncAll(primaryPosition);
+        return; 
       }
-    }
-    
-    // Resync if needed
-    if (needsResync) {
-      await _resyncAll(primaryPosition);
+      
+      // If drift exceeds normal tolerance, do a "soft catch-up" (non-disruptive)
+      if (drift > AppConstants.syncTolerance) {
+        debugPrint('SOFT SYNC: Track $trackName catching up (${drift.inMilliseconds}ms)');
+        // Just seek this specific track, don't pause others
+        await player.seek(primaryPosition);
+      }
     }
   }
 
-  /// Resyncs all players to the specified position
+  /// Performs a hard resync (pauses all for safety)
   Future<void> _resyncAll(Duration position) async {
-    debugPrint('Resyncing all tracks to ${position.inMilliseconds}ms');
-    
-    // Pause all players
-    await Future.wait(
-      _players.values.map((player) => player.pause()),
-    );
-    
-    // Seek all players to the target position
-    await Future.wait(
-      _players.values.map((player) => player.seek(position)),
-    );
-    
-    // Resume playback
-    await Future.wait(
-      _players.values.map((player) => player.play()),
-    );
+    // Only used if drift is very high
+    await Future.wait(_players.values.map((p) => p.pause()));
+    await Future.wait(_players.values.map((p) => p.seek(position)));
+    await Future.wait(_players.values.map((p) => p.play()));
   }
 
   /// Disposes all audio players

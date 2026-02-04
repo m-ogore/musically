@@ -95,10 +95,16 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             slivers: [
               // App bar with persistent playback controls
               SliverAppBar(
-                title: Text(hymn.title),
+                title: Hero(
+                  tag: 'title-${hymn.id}',
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Text(hymn.title),
+                  ),
+                ),
                 pinned: true,
                 actions: [
-                  // View toggle button
+                  // View toggle button (Lyrics vs Notation)
                   IconButton(
                     icon: Icon(
                       hymnProvider.showLyrics
@@ -152,9 +158,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                   hasScrollBody: true,
                   child: NotationView(
                     key: const ValueKey('notation'),
-                    grandStaffData: hymn.grandStaffData ?? '',
-                    systemTimestamps: hymn.systemTimestamps,
-                    musicXmlPath: hymn.musicXmlPath,
+                    data: const {}, // Legacy data, OsmdView uses musicXmlPath from currentHymn
                   ),
                 ),
             ],
