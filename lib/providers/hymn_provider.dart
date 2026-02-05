@@ -4,6 +4,7 @@ import '../services/hymn_repository.dart';
 
 enum ScrollMode { manual, audioSync }
 enum HighlightMode { individual, chord }
+enum NotationViewMode { fullSheet, lineByLine }
 
 /// Provider for managing hymn data and view state
 class HymnProvider with ChangeNotifier {
@@ -14,6 +15,7 @@ class HymnProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _showLyrics = true; // true for lyrics, false for notation
+  NotationViewMode _notationMode = NotationViewMode.fullSheet;
   ScrollMode _scrollMode = ScrollMode.audioSync;
   bool _highlightingEnabled = true;
   HighlightMode _highlightMode = HighlightMode.individual;
@@ -28,6 +30,7 @@ class HymnProvider with ChangeNotifier {
   ScrollMode get scrollMode => _scrollMode;
   bool get highlightingEnabled => _highlightingEnabled;
   HighlightMode get highlightMode => _highlightMode;
+  NotationViewMode get notationMode => _notationMode;
 
   /// Loads all hymns from the repository
   Future<void> loadHymns() async {
@@ -82,6 +85,12 @@ class HymnProvider with ChangeNotifier {
   /// Sets the scroll mode (Manual or Auto Sync)
   void setScrollMode(ScrollMode mode) {
     _scrollMode = mode;
+    notifyListeners();
+  }
+  
+  /// Sets the notation view mode (Full Sheet vs Line-by-Line)
+  void setNotationMode(NotationViewMode mode) {
+    _notationMode = mode;
     notifyListeners();
   }
 

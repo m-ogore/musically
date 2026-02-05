@@ -5,13 +5,18 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:io' show Platform;
+import 'package:provider/provider.dart';
+import '../providers/player_provider.dart';
+import '../providers/hymn_provider.dart';
 
 class OsmdView extends StatefulWidget {
   final String musicXmlPath;
+  final NotationViewMode mode;
 
   const OsmdView({
     super.key,
     required this.musicXmlPath,
+    this.mode = NotationViewMode.fullSheet,
   });
 
   @override
@@ -22,6 +27,7 @@ class _OsmdViewState extends State<OsmdView> {
   static String? _cachedHtmlContent;
   WebViewController? _controller;
   bool _isLoaded = false;
+  bool _syncReady = false;
   bool _isUnsupportedPlatform = false;
 
   @override
@@ -81,6 +87,19 @@ class _OsmdViewState extends State<OsmdView> {
         ),
       );
 
+      await newController.addJavaScriptChannel(
+        'OSMD',
+        onMessageReceived: (message) {
+          if (message.message == 'rendered') {
+            if (mounted) {
+              setState(() {
+                _syncReady = true;
+              });
+            }
+          }
+        },
+      );
+
       if (_cachedHtmlContent == null) {
         String htmlContent = await rootBundle.loadString('assets/notation/osmd_bridge.html');
         String jsContent = await rootBundle.loadString('assets/js/opensheetmusicdisplay.min.js');
@@ -107,21 +126,28 @@ class _OsmdViewState extends State<OsmdView> {
   @override
   void didUpdateWidget(OsmdView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_isLoaded && oldWidget.musicXmlPath != widget.musicXmlPath) {
+    if (_isLoaded && (oldWidget.musicXmlPath != widget.musicXmlPath || oldWidget.mode != widget.mode)) {
       _renderMusic();
     }
   }
 
   Future<void> _renderMusic() async {
+    if (mounted) {
+      setState(() {
+        _syncReady = false;
+      });
+    }
+    // Check for theme changes and update JS
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final width = MediaQuery.of(context).size.width;
+    final modeStr = widget.mode.toString().split('.').last;
+    
     try {
       final xmlContent = await rootBundle.loadString(widget.musicXmlPath);
       final escapedXml = xmlContent.replaceAll('`', '\\`').replaceAll('\$', '\\\$');
-      // Reduced zoom to ensure notation fits within screen width
-      double zoom = width < 400 ? 0.5 : 0.6;
       
-      await _controller?.runJavaScript('renderXML(`$escapedXml`, $isDarkMode, $zoom)');
+      // Zoom is now handled dynamically in osmd_bridge.html
+      // Pass mode (fullSheet / lineByLine) to JS
+      await _controller?.runJavaScript('renderXML(`$escapedXml`, $isDarkMode, "$modeStr")');
     } catch (e) {
       debugPrint('OSMD Render error: $e');
     }
@@ -135,6 +161,21 @@ class _OsmdViewState extends State<OsmdView> {
     if (_controller == null) {
       return const Center(child: CircularProgressIndicator());
     }
+
+    // Check for theme changes and update JS
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    _controller!.runJavaScript('setTheme($isDarkMode)');
+
+    // Real-time audio sync
+    final player = context.watch<PlayerProvider>();
+    if (player.isPlaying && _isLoaded && _syncReady) {
+      final positionMs = player.currentPosition.inMilliseconds;
+      final durationMs = player.totalDuration.inMilliseconds;
+      if (durationMs > 0) {
+        _controller!.runJavaScript('syncToTime($positionMs, $durationMs)');
+      }
+    }
+
     return WebViewWidget(controller: _controller!);
   }
 }

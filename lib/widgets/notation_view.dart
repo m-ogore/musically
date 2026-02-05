@@ -17,6 +17,9 @@ class NotationView extends StatelessWidget {
       return const Center(child: Text('No notation available for this hymn.'));
     }
 
-    return OsmdView(musicXmlPath: currentHymn.musicXmlPath!);
+    return OsmdView(
+      musicXmlPath: currentHymn.musicXmlPath!,
+      mode: hymnProvider.notationMode,
+    );
   }
 }
