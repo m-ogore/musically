@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/hymn_provider.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/notation_view.dart';
-import '../widgets/new_score_view.dart';
+import '../widgets/live_score_view.dart';
 import '../widgets/playback_header.dart';
 import '../widgets/numeric_keypad.dart';
 import '../providers/player_provider.dart';
@@ -173,12 +173,12 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                             ),
                           ),
                           const PopupMenuItem(
-                            value: HymnViewMode.newScore,
+                            value: HymnViewMode.liveScore,
                             child: Row(
                               children: [
                                 Icon(Icons.music_note),
                                 SizedBox(width: 8),
-                                Text('New Score View'),
+                                Text('Live Score View'),
                               ],
                             ),
                           ),
@@ -233,8 +233,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                   else
                     SliverFillRemaining(
                       hasScrollBody: true,
-                      child: NewScoreView(
-                        key: ValueKey('new-score-${hymn.id}'),
+                      child: LiveScoreView(
+                        key: ValueKey('live-score-${hymn.id}'),
                         data: const {},
                       ),
                     ),

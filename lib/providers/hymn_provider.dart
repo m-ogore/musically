@@ -5,7 +5,7 @@ import '../services/hymn_repository.dart';
 enum ScrollMode { manual, audioSync }
 enum HighlightMode { individual, chord }
 enum NotationViewMode { fullSheet, lineByLine }
-enum HymnViewMode { lyrics, imageScore, newScore }
+enum HymnViewMode { lyrics, imageScore, liveScore }
 
 /// Provider for managing hymn data and view state
 class HymnProvider with ChangeNotifier {
