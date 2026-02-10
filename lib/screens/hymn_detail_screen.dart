@@ -22,19 +22,39 @@ class HymnDetailScreen extends StatefulWidget {
 
 class _HymnDetailScreenState extends State<HymnDetailScreen> {
   bool _showKeypad = false;
+  late PageController _pageController;
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
+    
     // Load the hymn data and initialize audio
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final hymnProvider = context.read<HymnProvider>();
+      
+      // Ensure hymns are loaded
+      if (hymnProvider.hymns.isEmpty) {
+        await hymnProvider.loadHymns();
+      }
+      
       await hymnProvider.selectHymn(widget.hymnId);
       
       if (mounted) {
         final player = context.read<PlayerProvider>();
         final hymn = hymnProvider.selectedHymn;
+        
+        // Find initial index
         if (hymn != null) {
+          final index = hymnProvider.hymns.indexWhere((h) => h.id == hymn.id);
+          if (index != -1) {
+            setState(() {
+              _currentIndex = index;
+            });
+            _pageController = PageController(initialPage: index);
+          }
+          
           await player.initialize();
           await player.loadHymn(hymn);
         }
@@ -44,6 +64,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
   @override
   void dispose() {
+    _pageController.dispose();
     // Safely stop playback when leaving the screen
     try {
       Provider.of<PlayerProvider>(context, listen: false).stop();
@@ -86,82 +107,106 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             );
           }
 
-          final hymn = hymnProvider.selectedHymn;
-          if (hymn == null) {
-            return const Center(child: Text('Hymn not found'));
+          if (hymnProvider.hymns.isEmpty) {
+            return const Center(child: Text('No hymns available'));
           }
 
-          return CustomScrollView(
-            slivers: [
-              // App bar with persistent playback controls
-              SliverAppBar(
-                title: Hero(
-                  tag: 'title-${hymn.id}',
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: Text(hymn.title),
-                  ),
-                ),
-                pinned: true,
-                actions: [
-                  // View toggle button (Lyrics vs Notation)
-                  IconButton(
-                    icon: Icon(
-                      hymnProvider.showLyrics
-                          ? Icons.music_note
-                          : Icons.text_fields,
-                    ),
-                    onPressed: () => hymnProvider.toggleView(),
-                    tooltip: hymnProvider.showLyrics
-                        ? 'Show Notation'
-                        : 'Show Lyrics',
-                  ),
-                ],
-                bottom: const PlaybackHeader(),
-              ),
+          return PageView.builder(
+            controller: _pageController,
+            itemCount: hymnProvider.hymns.length,
+            onPageChanged: (index) async {
+              final newHymn = hymnProvider.hymns[index];
+              await hymnProvider.selectHymn(newHymn.id);
+              if (mounted) {
+                final player = context.read<PlayerProvider>();
+                await player.loadHymn(newHymn);
+              }
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final hymn = hymnProvider.hymns[index];
+              
+              // We only want to show content for the active hymn to avoid 
+              // multiple audio/webview initializations in the background
+              if (hymnProvider.selectedHymn?.id != hymn.id) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-              // Content
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Author
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Text(
-                        'By ${hymn.author}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+              return CustomScrollView(
+                slivers: [
+                  // App bar with persistent playback controls
+                  SliverAppBar(
+                    title: Hero(
+                      tag: 'title-${hymn.id}',
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Text(hymn.title),
                       ),
                     ),
-
-                    // History (expandable)
-                    if (hymn.history.isNotEmpty)
-                      _HistorySection(history: hymn.history),
-
-                    const Divider(height: 16),
-                  ],
-                ),
-              ),
-
-              // Content: Show Lyrics or Notation
-              if (hymnProvider.showLyrics)
-                SliverToBoxAdapter(
-                  child: LyricsView(
-                    key: const ValueKey('lyrics'),
-                    lyrics: hymn.lyrics,
+                    pinned: true,
+                    actions: [
+                      // View toggle button (Lyrics vs Notation)
+                      IconButton(
+                        icon: Icon(
+                          hymnProvider.showLyrics
+                              ? Icons.music_note
+                              : Icons.text_fields,
+                        ),
+                        onPressed: () => hymnProvider.toggleView(),
+                        tooltip: hymnProvider.showLyrics
+                            ? 'Show Notation'
+                            : 'Show Lyrics',
+                      ),
+                    ],
+                    bottom: const PlaybackHeader(),
                   ),
-                )
-              else
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: NotationView(
-                    key: const ValueKey('notation'),
-                    data: const {}, // Legacy data, OsmdView uses musicXmlPath from currentHymn
+    
+                  // Content
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Author
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                          child: Text(
+                            'By ${hymn.author}',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+    
+                        // History (expandable)
+                        if (hymn.history.isNotEmpty)
+                          _HistorySection(history: hymn.history),
+    
+                        const Divider(height: 16),
+                      ],
+                    ),
                   ),
-                ),
-            ],
+    
+                  // Content: Show Lyrics or Notation
+                  if (hymnProvider.showLyrics)
+                    SliverToBoxAdapter(
+                      child: LyricsView(
+                        key: ValueKey('lyrics-${hymn.id}'),
+                        lyrics: hymn.lyrics,
+                      ),
+                    )
+                  else
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: NotationView(
+                        key: ValueKey('notation-${hymn.id}'),
+                        data: const {}, 
+                      ),
+                    ),
+                ],
+              );
+            },
           );
         },
       ),

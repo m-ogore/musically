@@ -15,6 +15,7 @@ class Hymn {
   final Map<String, String> audioPaths;
   final Duration audioOffset; // Delay before content starts (e.g. key intro)
   final double tempoFactor; // Ratio to scale audio time to notation time
+  final String? scoreImagePath; // Path to high-quality image of the score
 
   const Hymn({
     required this.id,
@@ -31,6 +32,7 @@ class Hymn {
     required this.audioPaths,
     this.audioOffset = Duration.zero,
     this.tempoFactor = 1.0,
+    this.scoreImagePath,
   });
 
   /// Creates a Hymn from a JSON map
@@ -54,6 +56,7 @@ class Hymn {
       audioPaths: Map<String, String>.from(json['audioPaths'] as Map),
       audioOffset: Duration(milliseconds: json['audioOffset'] as int? ?? 0),
       tempoFactor: (json['tempoFactor'] as num? ?? 1.0).toDouble(),
+      scoreImagePath: json['scoreImagePath'] as String?,
     );
   }
 
@@ -74,6 +77,7 @@ class Hymn {
       'audioPaths': audioPaths,
       'audioOffset': audioOffset.inMilliseconds,
       'tempoFactor': tempoFactor,
+      'scoreImagePath': scoreImagePath,
     };
   }
 
@@ -93,6 +97,7 @@ class Hymn {
     Map<String, String>? audioPaths,
     Duration? audioOffset,
     double? tempoFactor,
+    String? scoreImagePath,
   }) {
     return Hymn(
       id: id ?? this.id,
@@ -109,6 +114,7 @@ class Hymn {
       audioPaths: audioPaths ?? this.audioPaths,
       audioOffset: audioOffset ?? this.audioOffset,
       tempoFactor: tempoFactor ?? this.tempoFactor,
+      scoreImagePath: scoreImagePath ?? this.scoreImagePath,
     );
   }
 

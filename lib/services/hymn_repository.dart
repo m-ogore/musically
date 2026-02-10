@@ -50,6 +50,12 @@ class HymnRepository {
     } : {};
 
     final String musicXmlPath = hasMusicXml ? 'assets/notation/$id.xml' : '';
+    
+    // Derive score image path (e.g., assets/images/SDAH_010_page3.png)
+    final String paddedId = id.padLeft(3, '0');
+    // Using a path that works across platforms. 
+    // Flutter Web sometimes handles 'assets/' prefix differently in debug mode.
+    final String scoreImagePath = 'assets/images/SDAH_${paddedId}_page3.png';
 
     return Hymn(
       id: id,
@@ -75,6 +81,7 @@ class HymnRepository {
       
       audioPaths: audioPaths,
       musicXmlPath: musicXmlPath,
+      scoreImagePath: scoreImagePath,
     );
   }
 }

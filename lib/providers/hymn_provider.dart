@@ -117,4 +117,24 @@ class HymnProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  /// Finds the next hymn ID for navigation
+  String? getNextHymnId() {
+    if (_selectedHymn == null || _hymns.isEmpty) return null;
+    final currentIndex = _hymns.indexWhere((h) => h.id == _selectedHymn!.id);
+    if (currentIndex == -1) return null;
+    
+    final nextIndex = (currentIndex + 1) % _hymns.length;
+    return _hymns[nextIndex].id;
+  }
+
+  /// Finds the previous hymn ID for navigation
+  String? getPreviousHymnId() {
+    if (_selectedHymn == null || _hymns.isEmpty) return null;
+    final currentIndex = _hymns.indexWhere((h) => h.id == _selectedHymn!.id);
+    if (currentIndex == -1) return null;
+    
+    final prevIndex = (currentIndex - 1 + _hymns.length) % _hymns.length;
+    return _hymns[prevIndex].id;
+  }
 }
