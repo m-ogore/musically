@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/hymn_provider.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/notation_view.dart';
+import '../widgets/new_score_view.dart';
 import '../widgets/playback_header.dart';
 import '../widgets/numeric_keypad.dart';
 import '../providers/player_provider.dart';
@@ -23,7 +24,6 @@ class HymnDetailScreen extends StatefulWidget {
 class _HymnDetailScreenState extends State<HymnDetailScreen> {
   bool _showKeypad = false;
   late PageController _pageController;
-  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -49,9 +49,6 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
         if (hymn != null) {
           final index = hymnProvider.hymns.indexWhere((h) => h.id == hymn.id);
           if (index != -1) {
-            setState(() {
-              _currentIndex = index;
-            });
             _pageController = PageController(initialPage: index);
           }
           
@@ -121,10 +118,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 final player = context.read<PlayerProvider>();
                 await player.loadHymn(newHymn);
               }
-              setState(() {
-                _currentIndex = index;
-              });
-            },
+              },
             itemBuilder: (context, index) {
               final hymn = hymnProvider.hymns[index];
               
@@ -147,17 +141,49 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     ),
                     pinned: true,
                     actions: [
-                      // View toggle button (Lyrics vs Notation)
-                      IconButton(
+                      // View Mode Selector
+                      PopupMenuButton<HymnViewMode>(
                         icon: Icon(
-                          hymnProvider.showLyrics
-                              ? Icons.music_note
-                              : Icons.text_fields,
+                          hymnProvider.viewMode == HymnViewMode.lyrics
+                              ? Icons.text_fields
+                              : hymnProvider.viewMode == HymnViewMode.imageScore
+                                  ? Icons.image
+                                  : Icons.music_note,
                         ),
-                        onPressed: () => hymnProvider.toggleView(),
-                        tooltip: hymnProvider.showLyrics
-                            ? 'Show Notation'
-                            : 'Show Lyrics',
+                        onSelected: (mode) => hymnProvider.setViewMode(mode),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: HymnViewMode.lyrics,
+                            child: Row(
+                              children: [
+                                Icon(Icons.text_fields),
+                                SizedBox(width: 8),
+                                Text('Lyrics View'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: HymnViewMode.imageScore,
+                            child: Row(
+                              children: [
+                                Icon(Icons.image),
+                                SizedBox(width: 8),
+                                Text('Image Score'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: HymnViewMode.newScore,
+                            child: Row(
+                              children: [
+                                Icon(Icons.music_note),
+                                SizedBox(width: 8),
+                                Text('New Score View'),
+                              ],
+                            ),
+                          ),
+                        ],
+                        tooltip: 'Switch View Mode',
                       ),
                     ],
                     bottom: const PlaybackHeader(),
@@ -188,20 +214,28 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     ),
                   ),
     
-                  // Content: Show Lyrics or Notation
-                  if (hymnProvider.showLyrics)
+                  // Content: Switch based on View Mode
+                  if (hymnProvider.viewMode == HymnViewMode.lyrics)
                     SliverToBoxAdapter(
                       child: LyricsView(
                         key: ValueKey('lyrics-${hymn.id}'),
                         lyrics: hymn.lyrics,
                       ),
                     )
-                  else
+                  else if (hymnProvider.viewMode == HymnViewMode.imageScore)
                     SliverFillRemaining(
                       hasScrollBody: true,
                       child: NotationView(
                         key: ValueKey('notation-${hymn.id}'),
                         data: const {}, 
+                      ),
+                    )
+                  else
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: NewScoreView(
+                        key: ValueKey('new-score-${hymn.id}'),
+                        data: const {},
                       ),
                     ),
                 ],

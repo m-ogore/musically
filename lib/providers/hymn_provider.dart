@@ -5,6 +5,7 @@ import '../services/hymn_repository.dart';
 enum ScrollMode { manual, audioSync }
 enum HighlightMode { individual, chord }
 enum NotationViewMode { fullSheet, lineByLine }
+enum HymnViewMode { lyrics, imageScore, newScore }
 
 /// Provider for managing hymn data and view state
 class HymnProvider with ChangeNotifier {
@@ -14,7 +15,7 @@ class HymnProvider with ChangeNotifier {
   Hymn? _selectedHymn;
   bool _isLoading = false;
   String? _error;
-  bool _showLyrics = true; // true for lyrics, false for notation
+  HymnViewMode _viewMode = HymnViewMode.lyrics;
   NotationViewMode _notationMode = NotationViewMode.fullSheet;
   ScrollMode _scrollMode = ScrollMode.audioSync;
   bool _highlightingEnabled = true;
@@ -25,8 +26,9 @@ class HymnProvider with ChangeNotifier {
   Hymn? get selectedHymn => _selectedHymn;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  bool get showLyrics => _showLyrics;
-  bool get showNotation => !_showLyrics;
+  HymnViewMode get viewMode => _viewMode;
+  bool get showLyrics => _viewMode == HymnViewMode.lyrics;
+  bool get showNotation => _viewMode == HymnViewMode.imageScore;
   ScrollMode get scrollMode => _scrollMode;
   bool get highlightingEnabled => _highlightingEnabled;
   HighlightMode get highlightMode => _highlightMode;
@@ -76,9 +78,19 @@ class HymnProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Toggles between lyrics and notation view
+  /// Sets the view mode directly
+  void setViewMode(HymnViewMode mode) {
+    _viewMode = mode;
+    notifyListeners();
+  }
+
+  /// Toggles between lyrics and notation view (Legacy support, cycles 2 main modes)
   void toggleView() {
-    _showLyrics = !_showLyrics;
+    if (_viewMode == HymnViewMode.lyrics) {
+      _viewMode = HymnViewMode.imageScore;
+    } else {
+      _viewMode = HymnViewMode.lyrics;
+    }
     notifyListeners();
   }
 
@@ -106,11 +118,6 @@ class HymnProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sets the view mode explicitly
-  void setViewMode({required bool showLyrics}) {
-    _showLyrics = showLyrics;
-    notifyListeners();
-  }
 
   /// Clears any error messages
   void clearError() {
