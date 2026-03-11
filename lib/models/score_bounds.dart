@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 /// The root coordinate mapping for a specific hymn's image.
 class ScoreBoundsData {

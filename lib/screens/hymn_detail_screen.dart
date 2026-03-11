@@ -118,11 +118,10 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             onPageChanged: (index) async {
               final newHymn = hymnProvider.hymns[index];
               await hymnProvider.selectHymn(newHymn.id);
-              if (mounted) {
-                final player = context.read<PlayerProvider>();
-                await player.loadHymn(newHymn);
-              }
-              },
+              if (!mounted) return;
+              // ignore: use_build_context_synchronously
+              await context.read<PlayerProvider>().loadHymn(newHymn);
+            },
             itemBuilder: (context, index) {
               final hymn = hymnProvider.hymns[index];
 
