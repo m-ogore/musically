@@ -25,6 +25,9 @@ class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
         child: const Center(child: CircularProgressIndicator()),
       );
     }
+    
+    final currentHymn = player.currentHymn;
+    final hasAudio = currentHymn != null && currentHymn.audioPaths.isNotEmpty;
 
     return Container(
       height: preferredSize.height,
@@ -32,7 +35,23 @@ class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
       decoration: BoxDecoration(
         color: theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
       ),
-      child: Column(
+      child: !hasAudio 
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.audio_file_outlined, size: 32, color: theme.colorScheme.outline),
+                const SizedBox(height: 8),
+                Text(
+                  'Audio is not yet available for this hymn.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Main View & Playback Row

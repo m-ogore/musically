@@ -5,6 +5,7 @@ import 'package:audio_session/audio_session.dart';
 import '../models/hymn.dart';
 import '../models/mixer_state.dart';
 import '../utils/constants.dart';
+import 'download_service.dart';
 
 /// Service that manages synchronized playback of multiple audio tracks
 /// with individual volume control for each track
@@ -74,9 +75,20 @@ class AudioPlayerService {
         final player = AudioPlayer();
         _players[trackName] = player;
         
-        // Load the audio file
+        // Load the audio file (check for local download first, then fallback to Firebase Storage URL)
         try {
-          await player.setAsset(audioPath);
+          final downloadService = DownloadService();
+          final isDownloaded = await downloadService.isTrackDownloaded(hymn.id, trackName);
+          
+          if (isDownloaded) {
+            final localPath = await downloadService.getLocalTrackPath(hymn.id, trackName);
+            await player.setFilePath(localPath);
+            debugPrint('Playing local cached track: $trackName');
+          } else if (audioPath.toString().startsWith('http')) {
+             await player.setUrl(audioPath);
+          } else {
+             await player.setAsset(audioPath);
+          }
           
           // Set initial volume based on mixer state
           final effectiveVolume = _mixerState.getEffectiveVolume(trackName);

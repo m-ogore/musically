@@ -1,0 +1,58 @@
+{
+    "imageWidth": 816,
+    "imageHeight": 1056,
+    "systems": [
+        {
+            "index": 0,
+            "bounds": {
+                "x": 30,
+                "y": 120,
+                "width": 756,
+                "height": 150
+            },
+            "measures": [
+                {
+                    "index": 1,
+                    "bounds": {
+                        "x": 30,
+                        "y": 120,
+                        "width": 200,
+                        "height": 150
+                    },
+                    "beats": [
+                        {
+                            "timeMs": 1000,
+                            "durationMs": 1500,
+                            "bounds": {
+                                "x": 50,
+                                "y": 130,
+                                "width": 30,
+                                "height": 130
+                            }
+                        },
+                        {
+                            "timeMs": 2500,
+                            "durationMs": 1500,
+                            "bounds": {
+                                "x": 100,
+                                "y": 130,
+                                "width": 30,
+                                "height": 130
+                            }
+                        },
+                        {
+                            "timeMs": 4000,
+                            "durationMs": 1500,
+                            "bounds": {
+                                "x": 150,
+                                "y": 130,
+                                "width": 30,
+                                "height": 130
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

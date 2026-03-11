@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -27,12 +28,48 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png" />
 
   <title>musically</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Music Score Rendering -->
+  <script src="assets/assets/js/opensheetmusicdisplay.min.js"></script>
+  <script>
+    window.osmdInterop = {
+      osmd: null,
+      init: function (container) {
+        if (this.osmd) return;
+        this.osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(container, {
+          autoResize: true,
+          backend: "svg",
+          drawTitle: false,
+          drawSubtitle: false,
+          drawComposer: false,
+          drawLyricist: false,
+        });
+      },
+      render: async function (xml, isDarkMode) {
+        if (!this.osmd) return;
+        try {
+          await this.osmd.load(xml);
+          this.osmd.setOptions({
+            darkMode: isDarkMode,
+          });
+          this.osmd.render();
+        } catch (e) {
+          console.error("OSMD Render Error:", e);
+        }
+      },
+      resize: function () {
+        if (this.osmd) this.osmd.render();
+      }
+    };
+  </script>
 </head>
+
 <body>
   <script src="flutter_bootstrap.js" async></script>
 </body>
+
 </html>

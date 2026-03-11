@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/hymn.dart';
 
 /// Repository for managing hymn data for the SDA Hymnal (SDAH).
@@ -40,13 +41,17 @@ class HymnRepository {
     final bool hasAudio = json['hasAudio'] ?? false;
     final bool hasMusicXml = json['hasMusicXml'] ?? false;
     
-    // Construct dynamic paths
+    // Construct dynamic paths using Supabase Storage public URLs
+    // Base URL structure: https://[project_id].supabase.co/storage/v1/object/public/[bucket]/[path]
+    final String supabaseUrl = dotenv.env['SUPABASE_URL'] ?? 'https://qxxdjnjljblzfdesdxyl.supabase.co';
+    final String supabaseBaseUrl = '$supabaseUrl/storage/v1/object/public/audio';
+    
     final Map<String, String> audioPaths = hasAudio ? {
-      'soprano': 'assets/audio/$id/soprano.mp3',
-      'alto': 'assets/audio/$id/alto.mp3',
-      'tenor': 'assets/audio/$id/tenor.mp3',
-      'bass': 'assets/audio/$id/bass.mp3',
-      'instrumental': 'assets/audio/$id/instrumental.mp3',
+      'soprano': '$supabaseBaseUrl/$id/soprano.mp3',
+      'alto': '$supabaseBaseUrl/$id/alto.mp3',
+      'tenor': '$supabaseBaseUrl/$id/tenor.mp3',
+      'bass': '$supabaseBaseUrl/$id/bass.mp3',
+      'instrumental': '$supabaseBaseUrl/$id/instrumental.mp3',
     } : {};
 
     final String musicXmlPath = hasMusicXml ? 'assets/notation/$id.xml' : '';

@@ -7,6 +7,6 @@ void main() {
     await tester.pumpWidget(const MusicallyApp());
 
     // Verify that the app launches
-    expect(find.text('Musically'), findsOneWidget);
+    expect(find.text('SDA Hymn Mixer'), findsOneWidget);
   });
 }

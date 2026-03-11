@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/hymn_provider.dart';
 import '../providers/player_provider.dart';
+import '../providers/favorites_provider.dart';
 import '../widgets/hymn_tile.dart';
 import '../delegates/hymn_search_delegate.dart';
 import 'hymn_detail_screen.dart';
@@ -16,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -30,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SDA Hymn Mixer'),
+        title: Text(_currentIndex == 0 ? 'SDA Hymn Mixer' : 'Favorites'),
         centerTitle: false,
         actions: [
           IconButton(
@@ -45,8 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Consumer<HymnProvider>(
-        builder: (context, hymnProvider, child) {
+      body: Consumer2<HymnProvider, FavoritesProvider>(
+        builder: (context, hymnProvider, favoritesProvider, child) {
           if (hymnProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -79,28 +82,69 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          // Return ListView directly, removing ResponsiveBuilder branch
-          // User requested forced Grid -> List change
-          return _buildListView(hymnProvider);
+          final hymnsToDisplay = _currentIndex == 0 
+              ? hymnProvider.hymns 
+              : hymnProvider.hymns.where((h) => favoritesProvider.isFavorite(h.id)).toList();
+
+          if (_currentIndex == 1 && hymnsToDisplay.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Icon(Icons.favorite_border, size: 64, color: Theme.of(context).colorScheme.outline),
+                   const SizedBox(height: 16),
+                   Text(
+                     'No favorites yet',
+                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                     ),
+                   ),
+                   const SizedBox(height: 8),
+                   Text(
+                     'Tap the heart icon on a hymn to save it here.',
+                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                       color: Theme.of(context).colorScheme.outline,
+                     ),
+                   ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: hymnsToDisplay.length,
+            itemBuilder: (context, index) {
+              final hymn = hymnsToDisplay[index];
+              return HymnTile(
+                hymn: hymn,
+                onTap: () => _navigateToDetail(hymn.id),
+              );
+            },
+          );
         },
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.library_music_outlined),
+            selectedIcon: Icon(Icons.library_music),
+            label: 'All Hymns',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.favorite_outline),
+            selectedIcon: Icon(Icons.favorite),
+            label: 'Favorites',
+          ),
+        ],
       ),
     );
   }
-
-  Widget _buildListView(HymnProvider hymnProvider) {
-    return ListView.builder(
-      itemCount: hymnProvider.hymns.length,
-      itemBuilder: (context, index) {
-        final hymn = hymnProvider.hymns[index];
-        return HymnTile(
-          hymn: hymn,
-          onTap: () => _navigateToDetail(hymn.id),
-        );
-      },
-    );
-  }
-
-
 
   void _openSearch(BuildContext context) {
     final hymnProvider = context.read<HymnProvider>();
@@ -127,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showAboutDialog(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'Musically',
+      applicationName: 'SDA Hymn Mixer',
       applicationVersion: '1.0.0',
       applicationIcon: const Icon(Icons.music_note, size: 48),
       children: [
@@ -140,7 +184,8 @@ class _HomeScreenState extends State<HomeScreen> {
           '• Synchronized multi-track playback\n'
           '• Individual volume control for each voice part\n'
           '• Lyrics and musical notation views\n'
-          '• Responsive design for mobile and tablet',
+          '• Responsive design for mobile and tablet\n'
+          '• Offline track downloads',
         ),
       ],
     );

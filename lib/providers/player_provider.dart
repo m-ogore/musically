@@ -97,8 +97,11 @@ class PlayerProvider with ChangeNotifier {
   /// Plays the current hymn
   Future<void> play() async {
     try {
+      _isPlaying = true;
+      notifyListeners();
       await _audioService.play();
     } catch (e) {
+      _isPlaying = false;
       _error = 'Playback error: $e';
       notifyListeners();
     }
@@ -107,6 +110,8 @@ class PlayerProvider with ChangeNotifier {
   /// Pauses playback
   Future<void> pause() async {
     try {
+      _isPlaying = false;
+      notifyListeners();
       await _audioService.pause();
     } catch (e) {
       _error = 'Pause error: $e';
@@ -126,6 +131,8 @@ class PlayerProvider with ChangeNotifier {
   /// Stops playback
   Future<void> stop() async {
     try {
+      _isPlaying = false;
+      notifyListeners();
       await _audioService.stop();
     } catch (e) {
       _error = 'Stop error: $e';

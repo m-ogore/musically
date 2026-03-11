@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/hymn_provider.dart';
+import '../providers/favorites_provider.dart';
 import '../widgets/lyrics_view.dart';
+import '../widgets/download_bottom_sheet.dart';
 import '../widgets/notation_view.dart';
-import '../widgets/live_score_view.dart';
 import '../widgets/playback_header.dart';
 import '../widgets/numeric_keypad.dart';
 import '../providers/player_provider.dart';
@@ -24,17 +25,26 @@ class HymnDetailScreen extends StatefulWidget {
 class _HymnDetailScreenState extends State<HymnDetailScreen> {
   bool _showKeypad = false;
   late PageController _pageController;
+  late final PlayerProvider _playerProvider;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _playerProvider = context.read<PlayerProvider>();
+    final hymnProvider = context.read<HymnProvider>();
     
-    // Load the hymn data and initialize audio
+    // Find initial index synchronously so PageView mounts correctly
+    int initialIndex = 0;
+    if (hymnProvider.hymns.isNotEmpty) {
+      final index = hymnProvider.hymns.indexWhere((h) => h.id == widget.hymnId);
+      if (index != -1) initialIndex = index;
+    }
+    
+    _pageController = PageController(initialPage: initialIndex);
+    
+    // Load the hymn data and initialize audio asynchronously
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final hymnProvider = context.read<HymnProvider>();
-      
-      // Ensure hymns are loaded
+      // Ensure hymns are loaded (fallback)
       if (hymnProvider.hymns.isEmpty) {
         await hymnProvider.loadHymns();
       }
@@ -45,13 +55,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
         final player = context.read<PlayerProvider>();
         final hymn = hymnProvider.selectedHymn;
         
-        // Find initial index
         if (hymn != null) {
-          final index = hymnProvider.hymns.indexWhere((h) => h.id == hymn.id);
-          if (index != -1) {
-            _pageController = PageController(initialPage: index);
-          }
-          
           await player.initialize();
           await player.loadHymn(hymn);
         }
@@ -64,7 +68,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     _pageController.dispose();
     // Safely stop playback when leaving the screen
     try {
-      Provider.of<PlayerProvider>(context, listen: false).stop();
+      _playerProvider.stop();
     } catch (_) {
       // Background stop if provider is already gone
     }
@@ -121,12 +125,6 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               },
             itemBuilder: (context, index) {
               final hymn = hymnProvider.hymns[index];
-              
-              // We only want to show content for the active hymn to avoid 
-              // multiple audio/webview initializations in the background
-              if (hymnProvider.selectedHymn?.id != hymn.id) {
-                return const Center(child: CircularProgressIndicator());
-              }
 
               return CustomScrollView(
                 slivers: [
@@ -141,6 +139,33 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     ),
                     pinned: true,
                     actions: [
+                      // Favorite Toggle Button
+                      Consumer<FavoritesProvider>(
+                        builder: (context, favorites, child) {
+                          final isFav = favorites.isFavorite(hymn.id);
+                          return IconButton(
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: isFav ? Colors.red : null,
+                            ),
+                            tooltip: isFav ? 'Remove from Favorites' : 'Add to Favorites',
+                            onPressed: () {
+                              favorites.toggleFavorite(hymn.id);
+                            },
+                          );
+                        },
+                      ),
+                      // Download Tracks Button
+                      IconButton(
+                        icon: const Icon(Icons.download_for_offline),
+                        tooltip: 'Download Audio',
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) => DownloadBottomSheet(hymn: hymn),
+                          );
+                        },
+                      ),
                       // View Mode Selector
                       PopupMenuButton<HymnViewMode>(
                         icon: Icon(
@@ -169,16 +194,6 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                                 Icon(Icons.image),
                                 SizedBox(width: 8),
                                 Text('Image Score'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: HymnViewMode.liveScore,
-                            child: Row(
-                              children: [
-                                Icon(Icons.music_note),
-                                SizedBox(width: 8),
-                                Text('Live Score View'),
                               ],
                             ),
                           ),
@@ -222,20 +237,12 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         lyrics: hymn.lyrics,
                       ),
                     )
-                  else if (hymnProvider.viewMode == HymnViewMode.imageScore)
+                  else
                     SliverFillRemaining(
                       hasScrollBody: true,
                       child: NotationView(
                         key: ValueKey('notation-${hymn.id}'),
                         data: const {}, 
-                      ),
-                    )
-                  else
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: LiveScoreView(
-                        key: ValueKey('live-score-${hymn.id}'),
-                        data: const {},
                       ),
                     ),
                 ],

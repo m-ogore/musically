@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'providers/hymn_provider.dart';
 import 'providers/player_provider.dart';
+import 'providers/system_highlight_provider.dart';
+import 'providers/visual_toggle_provider.dart';
+import 'providers/favorites_provider.dart';
 
 import 'screens/home_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  
   runApp(const MusicallyApp());
 }
 
@@ -18,6 +26,9 @@ class MusicallyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => HymnProvider()),
         ChangeNotifierProvider(create: (_) => PlayerProvider()),
+        ChangeNotifierProvider(create: (_) => SystemHighlightProvider()),
+        ChangeNotifierProvider(create: (_) => VisualToggleProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
       ],
       child: MaterialApp(
         title: 'SDA Hymn Mixer',

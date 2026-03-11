@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/hymn.dart';
+import '../providers/favorites_provider.dart';
 
 /// Compact tile widget for displaying a hymn in a list
 class HymnTile extends StatelessWidget {
@@ -52,9 +54,28 @@ class HymnTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: Icon(
-        Icons.chevron_right,
-        color: Theme.of(context).colorScheme.outline,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Consumer<FavoritesProvider>(
+            builder: (context, favorites, child) {
+              final isFav = favorites.isFavorite(hymn.id);
+              return IconButton(
+                icon: Icon(
+                  isFav ? Icons.favorite : Icons.favorite_border,
+                  color: isFav ? Colors.red : Theme.of(context).colorScheme.outline,
+                ),
+                onPressed: () {
+                  favorites.toggleFavorite(hymn.id);
+                },
+              );
+            },
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+        ],
       ),
     );
   }
