@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import '../models/score_bounds.dart';
 
 /// Manages the visual playback cursor independent of the audio player engine.
-/// 
+///
 /// Runs an internal visual timer that animates through coordinates parsed from
 /// `assets/data/coords/*.json`. The audio player merely provides play/pause/seek
 /// sync commands.
@@ -14,6 +14,8 @@ class VisualToggleProvider extends ChangeNotifier {
   BeatBounds? _currentBeat;
   MeasureBounds? _currentMeasure;
   SystemBounds? _currentSystem;
+  String? _loadedHymnId;
+  final Set<String> _missingCoordsLoggedFor = <String>{};
 
   bool _isPlaying = false;
   int _visualTimeMs = 0;
@@ -27,6 +29,11 @@ class VisualToggleProvider extends ChangeNotifier {
   bool get isPlaying => _isPlaying;
 
   Future<void> loadHymnCoords(String hymnId) async {
+    if (_loadedHymnId == hymnId) {
+      return;
+    }
+
+    _loadedHymnId = hymnId;
     _boundsData = null;
     _currentBeat = null;
     _currentMeasure = null;
@@ -37,13 +44,17 @@ class VisualToggleProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final jsonString = await rootBundle.loadString('assets/data/coords/$hymnId.json');
+      final jsonString = await rootBundle.loadString(
+        'assets/data/coords/$hymnId.json',
+      );
       final jsonData = json.decode(jsonString);
       _boundsData = ScoreBoundsData.fromJson(jsonData);
       notifyListeners();
     } catch (e) {
       // If the hymn doesn't have an explict mapping json yet, that's fine.
-      debugPrint("No explicit coordinate data found for hymn $hymnId.");
+      if (_missingCoordsLoggedFor.add(hymnId)) {
+        debugPrint('No explicit coordinate data found for hymn $hymnId.');
+      }
     }
   }
 
@@ -94,7 +105,8 @@ class VisualToggleProvider extends ChangeNotifier {
     for (final system in _boundsData!.systems) {
       for (final measure in system.measures) {
         for (final beat in measure.beats) {
-          if (_visualTimeMs >= beat.timeMs && _visualTimeMs < (beat.timeMs + beat.durationMs)) {
+          if (_visualTimeMs >= beat.timeMs &&
+              _visualTimeMs < (beat.timeMs + beat.durationMs)) {
             activeBeat = beat;
             activeMeasure = measure;
             activeSystem = system;

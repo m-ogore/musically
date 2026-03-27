@@ -6,7 +6,7 @@ import '../services/audio_player_service.dart';
 /// Provider for managing audio playback state
 class PlayerProvider with ChangeNotifier {
   final AudioPlayerService _audioService = AudioPlayerService();
-  
+
   bool _isInitialized = false;
   bool _isPlaying = false;
   Duration _currentPosition = Duration.zero;
@@ -15,6 +15,7 @@ class PlayerProvider with ChangeNotifier {
   Hymn? _currentHymn;
   bool _isLoading = false;
   String? _error;
+  bool _hasDownloadedTracks = false;
 
   // Getters
   bool get isInitialized => _isInitialized;
@@ -25,18 +26,20 @@ class PlayerProvider with ChangeNotifier {
   Hymn? get currentHymn => _currentHymn;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get hasDownloadedTracks => _hasDownloadedTracks;
 
   /// Current position adjusted by hymn offset (for notation sync)
   Duration get adjustedPosition {
     if (_currentHymn == null) return _currentPosition;
     final shifted = _currentPosition - _currentHymn!.audioOffset;
     if (shifted.isNegative) return Duration.zero;
-    
+
     // Scale the audio position to match notation timestamps
-    final scaledMs = (shifted.inMilliseconds * _currentHymn!.tempoFactor).toInt();
+    final scaledMs = (shifted.inMilliseconds * _currentHymn!.tempoFactor)
+        .toInt();
     return Duration(milliseconds: scaledMs);
   }
-  
+
   /// Progress as a percentage (0.0 to 1.0)
   double get progress {
     if (_totalDuration.inMilliseconds == 0) return 0.0;
@@ -50,28 +53,27 @@ class PlayerProvider with ChangeNotifier {
     try {
       await _audioService.initialize();
       _isInitialized = true;
-      
+
       // Listen to audio service streams
       _audioService.positionStream.listen((position) {
         _currentPosition = position;
         notifyListeners();
       });
-      
+
       _audioService.durationStream.listen((duration) {
         _totalDuration = duration;
         notifyListeners();
       });
-      
+
       _audioService.playingStream.listen((playing) {
         _isPlaying = playing;
         notifyListeners();
       });
-      
     } catch (e) {
       _error = 'Failed to initialize audio: $e';
       _isInitialized = false;
     }
-    
+
     notifyListeners();
   }
 
@@ -85,6 +87,7 @@ class PlayerProvider with ChangeNotifier {
       await _audioService.loadHymn(hymn);
       _currentHymn = hymn;
       _mixerState = _audioService.mixerState;
+      _hasDownloadedTracks = _audioService.hasLoadedPlayers;
       _error = null;
     } catch (e) {
       _error = 'Failed to load hymn: $e';

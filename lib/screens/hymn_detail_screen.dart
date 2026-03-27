@@ -13,10 +13,7 @@ import '../providers/player_provider.dart';
 class HymnDetailScreen extends StatefulWidget {
   final String hymnId;
 
-  const HymnDetailScreen({
-    super.key,
-    required this.hymnId,
-  });
+  const HymnDetailScreen({super.key, required this.hymnId});
 
   @override
   State<HymnDetailScreen> createState() => _HymnDetailScreenState();
@@ -32,29 +29,29 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     super.initState();
     _playerProvider = context.read<PlayerProvider>();
     final hymnProvider = context.read<HymnProvider>();
-    
+
     // Find initial index synchronously so PageView mounts correctly
     int initialIndex = 0;
     if (hymnProvider.hymns.isNotEmpty) {
       final index = hymnProvider.hymns.indexWhere((h) => h.id == widget.hymnId);
       if (index != -1) initialIndex = index;
     }
-    
+
     _pageController = PageController(initialPage: initialIndex);
-    
+
     // Load the hymn data and initialize audio asynchronously
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Ensure hymns are loaded (fallback)
       if (hymnProvider.hymns.isEmpty) {
         await hymnProvider.loadHymns();
       }
-      
+
       await hymnProvider.selectHymn(widget.hymnId);
-      
+
       if (mounted) {
         final player = context.read<PlayerProvider>();
         final hymn = hymnProvider.selectedHymn;
-        
+
         if (hymn != null) {
           await player.initialize();
           await player.loadHymn(hymn);
@@ -86,174 +83,188 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
 
-          if (hymnProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    hymnProvider.error!,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Go Back'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (hymnProvider.hymns.isEmpty) {
-            return const Center(child: Text('No hymns available'));
-          }
-
-          return PageView.builder(
-            controller: _pageController,
-            itemCount: hymnProvider.hymns.length,
-            onPageChanged: (index) async {
-              final newHymn = hymnProvider.hymns[index];
-              await hymnProvider.selectHymn(newHymn.id);
-              if (!mounted) return;
-              // ignore: use_build_context_synchronously
-              await context.read<PlayerProvider>().loadHymn(newHymn);
-            },
-            itemBuilder: (context, index) {
-              final hymn = hymnProvider.hymns[index];
-
-              return CustomScrollView(
-                slivers: [
-                  // App bar with persistent playback controls
-                  SliverAppBar(
-                    title: Hero(
-                      tag: 'title-${hymn.id}',
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: Text(hymn.title),
+              if (hymnProvider.error != null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red,
                       ),
-                    ),
-                    pinned: true,
-                    actions: [
-                      // Favorite Toggle Button
-                      Consumer<FavoritesProvider>(
-                        builder: (context, favorites, child) {
-                          final isFav = favorites.isFavorite(hymn.id);
-                          return IconButton(
-                            icon: Icon(
-                              isFav ? Icons.favorite : Icons.favorite_border,
-                              color: isFav ? Colors.red : null,
-                            ),
-                            tooltip: isFav ? 'Remove from Favorites' : 'Add to Favorites',
-                            onPressed: () {
-                              favorites.toggleFavorite(hymn.id);
-                            },
-                          );
-                        },
+                      const SizedBox(height: 16),
+                      Text(
+                        hymnProvider.error!,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        textAlign: TextAlign.center,
                       ),
-                      // Download Tracks Button
-                      IconButton(
-                        icon: const Icon(Icons.download_for_offline),
-                        tooltip: 'Download Audio',
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (context) => DownloadBottomSheet(hymn: hymn),
-                          );
-                        },
-                      ),
-                      // View Mode Selector
-                      PopupMenuButton<HymnViewMode>(
-                        icon: Icon(
-                          hymnProvider.viewMode == HymnViewMode.lyrics
-                              ? Icons.text_fields
-                              : hymnProvider.viewMode == HymnViewMode.imageScore
-                                  ? Icons.image
-                                  : Icons.music_note,
-                        ),
-                        onSelected: (mode) => hymnProvider.setViewMode(mode),
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: HymnViewMode.lyrics,
-                            child: Row(
-                              children: [
-                                Icon(Icons.text_fields),
-                                SizedBox(width: 8),
-                                Text('Lyrics View'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: HymnViewMode.imageScore,
-                            child: Row(
-                              children: [
-                                Icon(Icons.image),
-                                SizedBox(width: 8),
-                                Text('Image Score'),
-                              ],
-                            ),
-                          ),
-                        ],
-                        tooltip: 'Switch View Mode',
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Go Back'),
                       ),
                     ],
-                    bottom: const PlaybackHeader(),
                   ),
-    
-                  // Content
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Author
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                          child: Text(
-                            'By ${hymn.author}',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                );
+              }
+
+              if (hymnProvider.hymns.isEmpty) {
+                return const Center(child: Text('No hymns available'));
+              }
+
+              return PageView.builder(
+                controller: _pageController,
+                itemCount: hymnProvider.hymns.length,
+                onPageChanged: (index) async {
+                  final newHymn = hymnProvider.hymns[index];
+                  await hymnProvider.selectHymn(newHymn.id);
+                  if (!mounted) return;
+                  // ignore: use_build_context_synchronously
+                  await context.read<PlayerProvider>().loadHymn(newHymn);
+                },
+                itemBuilder: (context, index) {
+                  final hymn = hymnProvider.hymns[index];
+
+                  return CustomScrollView(
+                    slivers: [
+                      // App bar with persistent playback controls
+                      SliverAppBar(
+                        title: Hero(
+                          tag: 'title-${hymn.id}',
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: Text(hymn.title),
                           ),
                         ),
-    
-                        // History (expandable)
-                        if (hymn.history.isNotEmpty)
-                          _HistorySection(history: hymn.history),
-    
-                        const Divider(height: 16),
-                      ],
-                    ),
-                  ),
-    
-                  // Content: Switch based on View Mode
-                  if (hymnProvider.viewMode == HymnViewMode.lyrics)
-                    SliverToBoxAdapter(
-                      child: LyricsView(
-                        key: ValueKey('lyrics-${hymn.id}'),
-                        lyrics: hymn.lyrics,
+                        pinned: true,
+                        actions: [
+                          // Favorite Toggle Button
+                          Consumer<FavoritesProvider>(
+                            builder: (context, favorites, child) {
+                              final isFav = favorites.isFavorite(hymn.id);
+                              return IconButton(
+                                icon: Icon(
+                                  isFav
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFav ? Colors.red : null,
+                                ),
+                                tooltip: isFav
+                                    ? 'Remove from Favorites'
+                                    : 'Add to Favorites',
+                                onPressed: () {
+                                  favorites.toggleFavorite(hymn.id);
+                                },
+                              );
+                            },
+                          ),
+                          // Download Tracks Button
+                          IconButton(
+                            icon: const Icon(Icons.download_for_offline),
+                            tooltip: 'Download Audio',
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                builder: (context) =>
+                                    DownloadBottomSheet(hymn: hymn),
+                              );
+                            },
+                          ),
+                          // View Mode Selector
+                          PopupMenuButton<HymnViewMode>(
+                            icon: Icon(
+                              hymnProvider.viewMode == HymnViewMode.lyrics
+                                  ? Icons.text_fields
+                                  : hymnProvider.viewMode ==
+                                        HymnViewMode.imageScore
+                                  ? Icons.image
+                                  : Icons.music_note,
+                            ),
+                            onSelected: (mode) =>
+                                hymnProvider.setViewMode(mode),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: HymnViewMode.lyrics,
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.text_fields),
+                                    SizedBox(width: 8),
+                                    Text('Lyrics View'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: HymnViewMode.imageScore,
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.image),
+                                    SizedBox(width: 8),
+                                    Text('Image Score'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            tooltip: 'Switch View Mode',
+                          ),
+                        ],
+                        bottom: const PlaybackHeader(),
                       ),
-                    )
-                  else
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: NotationView(
-                        key: ValueKey('notation-${hymn.id}'),
-                        data: const {}, 
+
+                      // Content
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Author
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                              child: Text(
+                                'By ${hymn.author}',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ),
+
+                            // History (expandable)
+                            if (hymn.history.isNotEmpty)
+                              _HistorySection(history: hymn.history),
+
+                            const Divider(height: 16),
+                          ],
+                        ),
                       ),
-                    ),
-                ],
+
+                      // Content: Switch based on View Mode
+                      if (hymnProvider.viewMode == HymnViewMode.lyrics)
+                        SliverToBoxAdapter(
+                          child: LyricsView(
+                            key: ValueKey('lyrics-${hymn.id}'),
+                            lyrics: hymn.lyrics,
+                          ),
+                        )
+                      else
+                        SliverFillRemaining(
+                          hasScrollBody: true,
+                          child: NotationView(
+                            key: ValueKey('notation-${hymn.id}'),
+                            data: const {},
+                          ),
+                        ),
+                    ],
+                  );
+                },
               );
             },
-          );
-        },
-      ),
-      bottomNavigationBar: hymnProvider.showLyrics
-          ? _buildBottomKeypad(hymnProvider)
-          : null,
-    );
+          ),
+          bottomNavigationBar: hymnProvider.showLyrics
+              ? _buildBottomKeypad(hymnProvider)
+              : null,
+        );
       },
     );
   }
@@ -284,10 +295,10 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-        16, 
-        8, 
-        16, 
-        8 + MediaQuery.of(context).padding.bottom
+        16,
+        8,
+        16,
+        8 + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -364,9 +375,9 @@ class _HistorySectionState extends State<_HistorySection> {
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
             child: Text(
               widget.history,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                height: 1.6,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.6),
             ),
           ),
       ],

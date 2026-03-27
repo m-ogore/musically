@@ -17,7 +17,7 @@ class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
     final player = context.watch<PlayerProvider>();
     final hymnProvider = context.watch<HymnProvider>();
     final theme = Theme.of(context);
-    
+
     if (!player.isInitialized) {
       return Container(
         height: 160,
@@ -25,9 +25,12 @@ class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
         child: const Center(child: CircularProgressIndicator()),
       );
     }
-    
+
     final currentHymn = player.currentHymn;
-    final hasAudio = currentHymn != null && currentHymn.audioPaths.isNotEmpty;
+    final hasAudio =
+        currentHymn != null &&
+        currentHymn.audioPaths.isNotEmpty &&
+        player.hasDownloadedTracks;
 
     return Container(
       height: preferredSize.height,
@@ -35,103 +38,155 @@ class PlaybackHeader extends StatelessWidget implements PreferredSizeWidget {
       decoration: BoxDecoration(
         color: theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
       ),
-      child: !hasAudio 
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      child: !hasAudio
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.download_for_offline_outlined,
+                    size: 32,
+                    color: theme.colorScheme.outline,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    currentHymn != null && currentHymn.audioPaths.isNotEmpty
+                        ? 'Download audio tracks to enable playback.'
+                        : 'Audio is not yet available for this hymn.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.audio_file_outlined, size: 32, color: theme.colorScheme.outline),
-                const SizedBox(height: 8),
-                Text(
-                  'Audio is not yet available for this hymn.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                // Main View & Playback Row
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        player.isPlaying
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
+                        size: 44,
+                        color: theme.colorScheme.primary,
+                      ),
+                      onPressed: player.togglePlayPause,
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Slider(
+                            value: player.progress.clamp(0.0, 1.0),
+                            onChanged: (value) {
+                              final position = Duration(
+                                milliseconds:
+                                    (value *
+                                            player.totalDuration.inMilliseconds)
+                                        .toInt(),
+                              );
+                              player.seek(position);
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _formatDuration(player.currentPosition),
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                                Text(
+                                  _formatDuration(player.totalDuration),
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // View Toggle (Lyrics / Notation)
+                    IconButton(
+                      icon: Icon(
+                        hymnProvider.showLyrics
+                            ? Icons.music_note
+                            : Icons.text_fields,
+                      ),
+                      onPressed: hymnProvider.toggleView,
+                      tooltip: hymnProvider.showLyrics
+                          ? 'Show Notation'
+                          : 'Show Lyrics',
+                    ),
+                  ],
+                ),
+
+                const Divider(height: 16),
+
+                // Voice & Notation Mode Selection Row
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      // Voice toggles
+                      _VoiceToggle(
+                        label: 'S',
+                        trackName: AppConstants.sopranoTrack,
+                        color: AppConstants
+                            .trackColors[AppConstants.sopranoTrack]!,
+                      ),
+                      const SizedBox(width: 8),
+                      _VoiceToggle(
+                        label: 'A',
+                        trackName: AppConstants.altoTrack,
+                        color:
+                            AppConstants.trackColors[AppConstants.altoTrack]!,
+                      ),
+                      const SizedBox(width: 8),
+                      _VoiceToggle(
+                        label: 'T',
+                        trackName: AppConstants.tenorTrack,
+                        color:
+                            AppConstants.trackColors[AppConstants.tenorTrack]!,
+                      ),
+                      const SizedBox(width: 8),
+                      _VoiceToggle(
+                        label: 'B',
+                        trackName: AppConstants.bassTrack,
+                        color:
+                            AppConstants.trackColors[AppConstants.bassTrack]!,
+                      ),
+                      const SizedBox(width: 8),
+                      _VoiceToggle(
+                        label: 'Piano',
+                        trackName: AppConstants.instrumentalTrack,
+                        color: AppConstants
+                            .trackColors[AppConstants.instrumentalTrack]!,
+                      ),
+
+                      const SizedBox(width: 16),
+                      const VerticalDivider(width: 1),
+                      const SizedBox(width: 16),
+
+                      // Mixer / Volume Controls
+                      IconButton(
+                        icon: Icon(
+                          Icons.tune,
+                          color: theme.colorScheme.primary,
+                        ),
+                        onPressed: () => MixerBottomSheet.show(context),
+                        tooltip: 'Volume Mixer',
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          )
-        : Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Main View & Playback Row
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(
-                  player.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                  size: 44,
-                  color: theme.colorScheme.primary,
-                ),
-                onPressed: player.togglePlayPause,
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Slider(
-                      value: player.progress.clamp(0.0, 1.0),
-                      onChanged: (value) {
-                        final position = Duration(
-                          milliseconds: (value * player.totalDuration.inMilliseconds).toInt(),
-                        );
-                        player.seek(position);
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(_formatDuration(player.currentPosition), style: theme.textTheme.bodySmall),
-                          Text(_formatDuration(player.totalDuration), style: theme.textTheme.bodySmall),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // View Toggle (Lyrics / Notation)
-              IconButton(
-                icon: Icon(hymnProvider.showLyrics ? Icons.music_note : Icons.text_fields),
-                onPressed: hymnProvider.toggleView,
-                tooltip: hymnProvider.showLyrics ? 'Show Notation' : 'Show Lyrics',
-              ),
-            ],
-          ),
-          
-          const Divider(height: 16),
-          
-          // Voice & Notation Mode Selection Row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                // Voice toggles
-                _VoiceToggle(label: 'S', trackName: AppConstants.sopranoTrack, color: AppConstants.trackColors[AppConstants.sopranoTrack]!),
-                const SizedBox(width: 8),
-                _VoiceToggle(label: 'A', trackName: AppConstants.altoTrack, color: AppConstants.trackColors[AppConstants.altoTrack]!),
-                const SizedBox(width: 8),
-                _VoiceToggle(label: 'T', trackName: AppConstants.tenorTrack, color: AppConstants.trackColors[AppConstants.tenorTrack]!),
-                const SizedBox(width: 8),
-                _VoiceToggle(label: 'B', trackName: AppConstants.bassTrack, color: AppConstants.trackColors[AppConstants.bassTrack]!),
-                const SizedBox(width: 8),
-                _VoiceToggle(label: 'Piano', trackName: AppConstants.instrumentalTrack, color: AppConstants.trackColors[AppConstants.instrumentalTrack]!),
-                
-                const SizedBox(width: 16),
-                const VerticalDivider(width: 1),
-                const SizedBox(width: 16),
-                
-                // Mixer / Volume Controls
-                IconButton(
-                  icon: Icon(Icons.tune, color: theme.colorScheme.primary),
-                  onPressed: () => MixerBottomSheet.show(context),
-                  tooltip: 'Volume Mixer',
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -186,4 +241,3 @@ class _VoiceToggle extends StatelessWidget {
     );
   }
 }
-

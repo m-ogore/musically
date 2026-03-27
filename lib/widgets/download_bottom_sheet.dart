@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/hymn.dart';
+import '../providers/player_provider.dart';
 import '../utils/constants.dart';
 import '../services/download_service.dart';
 
@@ -29,7 +31,10 @@ class _DownloadBottomSheetState extends State<DownloadBottomSheet> {
   Future<void> _checkDownloadStatus() async {
     for (final track in AppConstants.allTracks) {
       if (widget.hymn.audioPaths.containsKey(track)) {
-        final isDownloaded = await _downloadService.isTrackDownloaded(widget.hymn.id, track);
+        final isDownloaded = await _downloadService.isTrackDownloaded(
+          widget.hymn.id,
+          track,
+        );
         _isDownloaded[track] = isDownloaded;
       }
     }
@@ -40,11 +45,7 @@ class _DownloadBottomSheetState extends State<DownloadBottomSheet> {
 
   Future<void> _toggleDownload(String trackName, String url) async {
     if (_isDownloaded[trackName] == true) {
-      // Delete
-      setState(() {
-        _isDownloaded[trackName] = false;
-      });
-      await _downloadService.deleteTrack(widget.hymn.id, trackName);
+      await _delete(trackName);
     } else {
       // Download
       setState(() {
@@ -69,6 +70,19 @@ class _DownloadBottomSheetState extends State<DownloadBottomSheet> {
         _downloading[trackName] = false;
         _isDownloaded[trackName] = success;
       });
+      // Reload the player so the newly downloaded track becomes available
+      if (success && mounted) {
+        await context.read<PlayerProvider>().loadHymn(widget.hymn);
+      }
+    }
+  }
+
+  Future<void> _delete(String trackName) async {
+    setState(() => _isDownloaded[trackName] = false);
+    await _downloadService.deleteTrack(widget.hymn.id, trackName);
+    // Reload player so the deleted track is removed from playback
+    if (mounted) {
+      await context.read<PlayerProvider>().loadHymn(widget.hymn);
     }
   }
 
@@ -95,9 +109,9 @@ class _DownloadBottomSheetState extends State<DownloadBottomSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             child: Text(
               'Offline Downloads',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           const Divider(),

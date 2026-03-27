@@ -12,9 +12,18 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  
+  await _loadEnvironment();
+
   runApp(const MusicallyApp());
+}
+
+Future<void> _loadEnvironment() async {
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    // Do not block app startup when local env file is missing.
+    debugPrint('Skipping .env load: $e');
+  }
 }
 
 class MusicallyApp extends StatelessWidget {
@@ -45,10 +54,7 @@ class MusicallyApp extends StatelessWidget {
               borderRadius: BorderRadius.all(Radius.circular(16)),
             ),
           ),
-          appBarTheme: const AppBarTheme(
-            centerTitle: false,
-            elevation: 0,
-          ),
+          appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(

@@ -41,6 +41,7 @@ class AudioPlayerService {
   bool get isPlaying => _primaryPlayer?.playing ?? false;
   MixerState get mixerState => _mixerState;
   Hymn? get currentHymn => _currentHymn;
+  bool get hasLoadedPlayers => _players.isNotEmpty;
 
   /// Initializes the audio session for proper audio handling
   Future<void> initialize() async {
@@ -79,9 +80,8 @@ class AudioPlayerService {
         final player = AudioPlayer();
         _players[trackName] = player;
 
-        // Load the audio file (check for local download first, then fallback to URL)
+        // Only play from local downloaded files — no streaming
         try {
-          // On web, path_provider is unavailable — always stream
           final isDownloaded =
               !kIsWeb &&
               await DownloadService().isTrackDownloaded(hymn.id, trackName);
@@ -92,12 +92,13 @@ class AudioPlayerService {
               trackName,
             );
             await player.setFilePath(localPath);
-            debugPrint('Playing local cached track: $trackName');
-          } else if (audioPath.toString().startsWith('http')) {
-            await player.setUrl(audioPath);
-            debugPrint('Streaming track: $trackName');
+            debugPrint('Loaded local track: $trackName');
           } else {
-            await player.setAsset(audioPath);
+            // Track not downloaded — skip it
+            _players.remove(trackName);
+            await player.dispose();
+            debugPrint('Skipping $trackName — not downloaded');
+            continue;
           }
 
           // Set initial volume based on mixer state
@@ -105,6 +106,7 @@ class AudioPlayerService {
           await player.setVolume(effectiveVolume);
         } catch (e) {
           debugPrint('Error loading audio for $trackName: $e');
+          _players.remove(trackName);
         }
       }
     }

@@ -23,10 +23,10 @@ class ScoreBoundsData {
   }
 
   Map<String, dynamic> toJson() => {
-        'imageWidth': imageWidth,
-        'imageHeight': imageHeight,
-        'systems': systems.map((s) => s.toJson()).toList(),
-      };
+    'imageWidth': imageWidth,
+    'imageHeight': imageHeight,
+    'systems': systems.map((s) => s.toJson()).toList(),
+  };
 }
 
 class SystemBounds {
@@ -61,15 +61,10 @@ class SystemBounds {
   }
 
   Map<String, dynamic> toJson() => {
-        'index': index,
-        'bounds': {
-          'x': x,
-          'y': y,
-          'width': width,
-          'height': height,
-        },
-        'measures': measures.map((m) => m.toJson()).toList(),
-      };
+    'index': index,
+    'bounds': {'x': x, 'y': y, 'width': width, 'height': height},
+    'measures': measures.map((m) => m.toJson()).toList(),
+  };
 }
 
 class MeasureBounds {
@@ -104,15 +99,10 @@ class MeasureBounds {
   }
 
   Map<String, dynamic> toJson() => {
-        'index': index,
-        'bounds': {
-          'x': x,
-          'y': y,
-          'width': width,
-          'height': height,
-        },
-        'beats': beats.map((b) => b.toJson()).toList(),
-      };
+    'index': index,
+    'bounds': {'x': x, 'y': y, 'width': width, 'height': height},
+    'beats': beats.map((b) => b.toJson()).toList(),
+  };
 }
 
 class BeatBounds {
@@ -145,13 +135,8 @@ class BeatBounds {
   }
 
   Map<String, dynamic> toJson() => {
-        'timeMs': timeMs,
-        'durationMs': durationMs,
-        'bounds': {
-          'x': x,
-          'y': y,
-          'width': width,
-          'height': height,
-        },
-      };
+    'timeMs': timeMs,
+    'durationMs': durationMs,
+    'bounds': {'x': x, 'y': y, 'width': width, 'height': height},
+  };
 }

@@ -20,18 +20,18 @@ class NotationView extends StatefulWidget {
 
 class _NotationViewState extends State<NotationView> {
   PlayerProvider? _playerProvider;
+  String? _lastLoadedHymnId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupPlayerListener();
-      
+
       // Load current hymn into highlighter
       final hymn = context.read<HymnProvider>().selectedHymn;
       if (hymn != null) {
-        context.read<SystemHighlightProvider>().loadHymn(hymn);
-        context.read<VisualToggleProvider>().loadHymnCoords(hymn.id);
+        _scheduleHymnLoad(hymn.id);
       }
     });
   }
@@ -49,13 +49,28 @@ class _NotationViewState extends State<NotationView> {
 
   void _onPlayerChanged() {
     if (!mounted) return;
-    
+
     final player = _playerProvider!;
     final highlighter = context.read<SystemHighlightProvider>();
     final visualToggle = context.read<VisualToggleProvider>();
-    
+
     highlighter.updatePosition(player.currentPosition, player.isPlaying);
     visualToggle.syncWithAudio(player.currentPosition, player.isPlaying);
+  }
+
+  void _scheduleHymnLoad(String hymnId) {
+    if (_lastLoadedHymnId == hymnId) return;
+
+    _lastLoadedHymnId = hymnId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final hymn = context.read<HymnProvider>().selectedHymn;
+      if (hymn == null || hymn.id != hymnId) return;
+
+      context.read<SystemHighlightProvider>().loadHymn(hymn);
+      context.read<VisualToggleProvider>().loadHymnCoords(hymnId);
+    });
   }
 
   @override
@@ -65,14 +80,9 @@ class _NotationViewState extends State<NotationView> {
     final visualToggle = context.watch<VisualToggleProvider>();
     final currentHymn = hymnProvider.selectedHymn;
 
-    // Load new hymn into highlighter if changed
+    // Load new hymn into highlighter only when the hymn changes.
     if (currentHymn != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-           context.read<SystemHighlightProvider>().loadHymn(currentHymn);
-           context.read<VisualToggleProvider>().loadHymnCoords(currentHymn.id);
-        }
-      });
+      _scheduleHymnLoad(currentHymn.id);
     }
 
     if (currentHymn == null ||
