@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../providers/hymn_provider.dart';
 import '../providers/favorites_provider.dart';
@@ -7,6 +8,7 @@ import '../widgets/download_bottom_sheet.dart';
 import '../widgets/notation_view.dart';
 import '../widgets/playback_header.dart';
 import '../widgets/numeric_keypad.dart';
+import '../widgets/audio_availability_badge.dart';
 import '../providers/player_provider.dart';
 
 /// Detail screen for viewing a specific hymn
@@ -139,6 +141,12 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         ),
                         pinned: true,
                         actions: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Center(
+                              child: AudioAvailabilityBadge(hymn: hymn),
+                            ),
+                          ),
                           // Favorite Toggle Button
                           Consumer<FavoritesProvider>(
                             builder: (context, favorites, child) {
@@ -159,18 +167,19 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                               );
                             },
                           ),
-                          // Download Tracks Button
-                          IconButton(
-                            icon: const Icon(Icons.download_for_offline),
-                            tooltip: 'Download Audio',
-                            onPressed: () {
-                              showModalBottomSheet(
-                                context: context,
-                                builder: (context) =>
-                                    DownloadBottomSheet(hymn: hymn),
-                              );
-                            },
-                          ),
+                          // Download tracks are only supported on native platforms.
+                          if (!kIsWeb)
+                            IconButton(
+                              icon: const Icon(Icons.download_for_offline),
+                              tooltip: 'Download Audio',
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) =>
+                                      DownloadBottomSheet(hymn: hymn),
+                                );
+                              },
+                            ),
                           // View Mode Selector
                           PopupMenuButton<HymnViewMode>(
                             icon: Icon(

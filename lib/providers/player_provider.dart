@@ -84,13 +84,31 @@ class PlayerProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _audioService.loadHymn(hymn);
+      final result = await _audioService.loadHymn(hymn);
       _currentHymn = hymn;
       _mixerState = _audioService.mixerState;
-      _hasDownloadedTracks = _audioService.hasLoadedPlayers;
-      _error = null;
+
+      if (result.success) {
+        _hasDownloadedTracks = _audioService.hasLoadedPlayers;
+        _error = null;
+      } else {
+        _hasDownloadedTracks = false;
+        switch (result.failureReason) {
+          case LoadFailureReason.notDownloaded:
+            _error = 'Download hymn audio tracks first to enable playback.';
+            break;
+          case LoadFailureReason.noAudioDefined:
+            _error = 'Audio is not available for this hymn.';
+            break;
+          case LoadFailureReason.loadError:
+          case null:
+            _error = 'Failed to load hymn audio.';
+            break;
+        }
+      }
     } catch (e) {
       _error = 'Failed to load hymn: $e';
+      _hasDownloadedTracks = false;
     } finally {
       _isLoading = false;
       notifyListeners();

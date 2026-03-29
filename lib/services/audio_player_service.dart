@@ -7,35 +7,71 @@ import '../models/mixer_state.dart';
 import '../utils/constants.dart';
 import 'download_service.dart';
 
+/// Describes why a hymn could not be loaded.
+enum LoadFailureReason {
+  /// The hymn has no audio paths defined at all.
+  noAudioDefined,
+
+  /// On native: the user has not downloaded the tracks yet.
+  notDownloaded,
+
+  /// The audio files could not be loaded from disk/network.
+  loadError,
+}
+
+class HymnLoadResult {
+  final bool success;
+  final LoadFailureReason? failureReason;
+
+  /// Which tracks are missing (not downloaded) on native.
+  final List<String> missingTracks;
+
+  const HymnLoadResult._({
+    required this.success,
+    this.failureReason,
+    this.missingTracks = const [],
+  });
+
+  factory HymnLoadResult.ok() => const HymnLoadResult._(success: true);
+
+  factory HymnLoadResult.notDownloaded(List<String> missing) =>
+      HymnLoadResult._(
+        success: false,
+        failureReason: LoadFailureReason.notDownloaded,
+        missingTracks: missing,
+      );
+
+  factory HymnLoadResult.noAudio() => const HymnLoadResult._(
+    success: false,
+    failureReason: LoadFailureReason.noAudioDefined,
+  );
+
+  factory HymnLoadResult.error() => const HymnLoadResult._(
+    success: false,
+    failureReason: LoadFailureReason.loadError,
+  );
+}
+
 /// Service that manages synchronized playback of multiple audio tracks
-/// with individual volume control for each track
+/// with individual volume control for each voice part.
+///
+/// Audio is streamed on web. On native it is played from local files only —
+/// the user must download the hymn first via [DownloadService].
 class AudioPlayerService {
-  // Map of track name to AudioPlayer instance
   final Map<String, AudioPlayer> _players = {};
-
-  // Primary player used for position reference
   AudioPlayer? _primaryPlayer;
-
-  // Current mixer state
   MixerState _mixerState = MixerState.initial();
-
-  // Current hymn being played
   Hymn? _currentHymn;
-
-  // Sync monitoring subscription
   StreamSubscription<Duration>? _syncSubscription;
 
-  // State streams
   final _positionController = StreamController<Duration>.broadcast();
   final _durationController = StreamController<Duration>.broadcast();
   final _playingController = StreamController<bool>.broadcast();
 
-  // Getters for state streams
   Stream<Duration> get positionStream => _positionController.stream;
   Stream<Duration> get durationStream => _durationController.stream;
   Stream<bool> get playingStream => _playingController.stream;
 
-  // Current state getters
   Duration get currentPosition => _primaryPlayer?.position ?? Duration.zero;
   Duration get totalDuration => _primaryPlayer?.duration ?? Duration.zero;
   bool get isPlaying => _primaryPlayer?.playing ?? false;
@@ -43,7 +79,7 @@ class AudioPlayerService {
   Hymn? get currentHymn => _currentHymn;
   bool get hasLoadedPlayers => _players.isNotEmpty;
 
-  /// Initializes the audio session for proper audio handling
+  /// Initialises the audio session.
   Future<void> initialize() async {
     final session = await AudioSession.instance;
     await session.configure(
@@ -66,217 +102,202 @@ class AudioPlayerService {
     );
   }
 
-  /// Loads a hymn and prepares all audio tracks for playback
-  Future<void> loadHymn(Hymn hymn) async {
-    // Dispose existing players
+  /// Attempts to load a hymn's audio tracks.
+  ///
+  /// Returns a [HymnLoadResult] describing success or the reason for failure.
+  /// On native: if any tracks are not yet downloaded the method returns
+  /// [LoadFailureReason.notDownloaded] without loading anything — the caller
+  /// should direct the user to download first.
+  Future<HymnLoadResult> loadHymn(Hymn hymn) async {
+    // Always clear previous hymn players first so we never keep stale audio
+    // loaded when the next hymn is unavailable locally.
     await _disposeAllPlayers();
-
     _currentHymn = hymn;
 
-    // Create a player for each track
-    for (final trackName in AppConstants.allTracks) {
-      final audioPath = hymn.audioPaths[trackName];
-      if (audioPath != null && audioPath.isNotEmpty) {
-        final player = AudioPlayer();
-        _players[trackName] = player;
+    if (hymn.audioPaths.isEmpty) {
+      return HymnLoadResult.noAudio();
+    }
 
-        // Only play from local downloaded files — no streaming
-        try {
-          final isDownloaded =
-              !kIsWeb &&
-              await DownloadService().isTrackDownloaded(hymn.id, trackName);
+    // ── Native: verify all tracks are downloaded before loading ────────────
+    if (!kIsWeb) {
+      final missingTracks = <String>[];
+      for (final trackName in AppConstants.allTracks) {
+        final url = hymn.audioPaths[trackName];
+        if (url == null || url.isEmpty) continue;
 
-          if (isDownloaded) {
-            final localPath = await DownloadService().getLocalTrackPath(
-              hymn.id,
-              trackName,
-            );
-            await player.setFilePath(localPath);
-            debugPrint('Loaded local track: $trackName');
-          } else {
-            // Track not downloaded — skip it
-            _players.remove(trackName);
-            await player.dispose();
-            debugPrint('Skipping $trackName — not downloaded');
-            continue;
-          }
-
-          // Set initial volume based on mixer state
-          final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
-          await player.setVolume(effectiveVolume);
-        } catch (e) {
-          debugPrint('Error loading audio for $trackName: $e');
-          _players.remove(trackName);
+        final downloaded = await DownloadService().isTrackDownloaded(
+          hymn.id,
+          trackName,
+        );
+        if (!downloaded) {
+          missingTracks.add(trackName);
         }
+      }
+
+      if (missingTracks.isNotEmpty) {
+        debugPrint(
+          'AudioPlayerService: hymn ${hymn.id} has ${missingTracks.length} '
+          'track(s) not downloaded: $missingTracks',
+        );
+        return HymnLoadResult.notDownloaded(missingTracks);
       }
     }
 
-    // Set the primary player (soprano by default, or first available)
-    _primaryPlayer =
-        _players[AppConstants.sopranoTrack] ?? _players.values.firstOrNull;
+    // ── Load each track ─────────────────────────────────────────────────────
+    bool anyLoaded = false;
+    for (final trackName in AppConstants.allTracks) {
+      final audioPath = hymn.audioPaths[trackName];
+      if (audioPath == null || audioPath.isEmpty) continue;
 
-    // Set up position and duration streams
-    if (_primaryPlayer != null) {
-      _primaryPlayer!.positionStream.listen((position) {
-        _positionController.add(position);
-      });
-
-      _primaryPlayer!.durationStream.listen((duration) {
-        if (duration != null) {
-          _durationController.add(duration);
+      final player = AudioPlayer();
+      try {
+        if (kIsWeb) {
+          // Web: stream directly from Supabase.
+          await player.setUrl(audioPath);
+        } else {
+          // Native: play from local file (already verified above).
+          final localPath = await DownloadService().getLocalTrackPath(
+            hymn.id,
+            trackName,
+          );
+          await player.setFilePath(localPath);
+          debugPrint('AudioPlayerService: loaded local track "$trackName"');
         }
-      });
 
-      _primaryPlayer!.playingStream.listen((playing) {
-        _playingController.add(playing);
-      });
+        final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
+        await player.setVolume(effectiveVolume);
+
+        _players[trackName] = player;
+        anyLoaded = true;
+      } catch (e) {
+        debugPrint('AudioPlayerService: error loading "$trackName": $e');
+        await player.dispose();
+      }
     }
+
+    if (!anyLoaded) {
+      return HymnLoadResult.error();
+    }
+
+    // ── Wire up primary player streams ──────────────────────────────────────
+    _primaryPlayer =
+        _players[AppConstants.sopranoTrack] ?? _players.values.first;
+
+    _primaryPlayer!.positionStream.listen(_positionController.add);
+    _primaryPlayer!.durationStream.listen((d) {
+      if (d != null) _durationController.add(d);
+    });
+    _primaryPlayer!.playingStream.listen(_playingController.add);
+
+    return HymnLoadResult.ok();
   }
 
-  /// Starts synchronized playback of all tracks
+  /// Starts synchronised playback of all loaded tracks.
   Future<void> play() async {
     if (_primaryPlayer == null || _players.isEmpty) return;
 
-    // Get the current position from primary player
     final position = _primaryPlayer!.position;
-
-    // 1. Prepare/Seek all players in parallel
-    await Future.wait(_players.values.map((player) => player.seek(position)));
-
-    // 2. Optimized fire: trigger all play commands as fast as possible
-    // We don't await each one individually to minimize inter-track latency
-    final playFutures = _players.values.map((player) => player.play()).toList();
-    await Future.wait(playFutures);
-
-    // Start monitoring synchronization
+    await Future.wait(_players.values.map((p) => p.seek(position)));
+    await Future.wait(_players.values.map((p) => p.play()));
     _startSyncMonitoring();
   }
 
-  /// Pauses all tracks
+  /// Pauses all tracks.
   Future<void> pause() async {
     if (_players.isEmpty) return;
-
-    // Stop sync monitoring
     await _syncSubscription?.cancel();
     _syncSubscription = null;
-
-    // Pause all players
-    await Future.wait(_players.values.map((player) => player.pause()));
+    await Future.wait(_players.values.map((p) => p.pause()));
   }
 
-  /// Stops playback and resets to beginning
+  /// Stops playback and resets to the beginning.
   Future<void> stop() async {
     await pause();
     await seek(Duration.zero);
   }
 
-  /// Seeks all tracks to the specified position
+  /// Seeks all tracks to [position].
   Future<void> seek(Duration position) async {
     if (_players.isEmpty) return;
-
-    // Seek all players to the same position in parallel
-    await Future.wait(_players.values.map((player) => player.seek(position)));
+    await Future.wait(_players.values.map((p) => p.seek(position)));
   }
 
-  /// Seeks backward by the configured duration
   Future<void> seekBackward() async {
-    final newPosition = currentPosition - AppConstants.seekBackwardDuration;
-    await seek(newPosition < Duration.zero ? Duration.zero : newPosition);
+    final next = currentPosition - AppConstants.seekBackwardDuration;
+    await seek(next < Duration.zero ? Duration.zero : next);
   }
 
-  /// Seeks forward by the configured duration
   Future<void> seekForward() async {
-    final newPosition = currentPosition + AppConstants.seekForwardDuration;
-    final maxPosition = totalDuration;
-    await seek(newPosition > maxPosition ? maxPosition : newPosition);
+    final next = currentPosition + AppConstants.seekForwardDuration;
+    final max = totalDuration;
+    await seek(next > max ? max : next);
   }
 
-  /// Sets the volume for a specific track
   Future<void> setTrackVolume(String trackName, double volume) async {
     _mixerState = _mixerState.setVolume(trackName, volume);
-    final player = _players[trackName];
-    if (player != null) {
-      final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
-      await player.setVolume(effectiveVolume);
-    }
+    await _applyVolume(trackName);
   }
 
-  /// Toggles mute for a specific track
   Future<void> toggleMute(String trackName) async {
     _mixerState = _mixerState.toggleMute(trackName);
-    final player = _players[trackName];
-    if (player != null) {
-      final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
-      await player.setVolume(effectiveVolume);
-    }
+    await _applyVolume(trackName);
   }
 
-  /// Sets mute state for a specific track
   Future<void> setMute(String trackName, bool muted) async {
     _mixerState = _mixerState.setMute(trackName, muted);
+    await _applyVolume(trackName);
+  }
+
+  Future<void> _applyVolume(String trackName) async {
     final player = _players[trackName];
     if (player != null) {
-      final effectiveVolume = _mixerState.getEffectiveVolume(trackName);
-      await player.setVolume(effectiveVolume);
+      await player.setVolume(_mixerState.getEffectiveVolume(trackName));
     }
   }
 
-  /// Starts monitoring synchronization between tracks
   void _startSyncMonitoring() {
     if (_primaryPlayer == null) return;
-
     _syncSubscription?.cancel();
     _syncSubscription = _primaryPlayer!.positionStream
         .where((_) => _primaryPlayer!.playing)
-        .listen((primaryPosition) {
-          _checkAndResync(primaryPosition);
-        });
+        .listen(_checkAndResync);
   }
 
-  /// Checks if tracks are in sync and resyncs if necessary
   Future<void> _checkAndResync(Duration primaryPosition) async {
-    // Check each player against the primary player
     for (final entry in _players.entries) {
-      final trackName = entry.key;
       final player = entry.value;
-
       if (player == _primaryPlayer) continue;
 
       final drift = (player.position - primaryPosition).abs();
 
-      // If drift is catastrophic, do a full hard resync (disruptive)
       if (drift > AppConstants.hardSyncTolerance) {
         debugPrint(
-          'CRITICAL: Track $trackName drifted by ${drift.inMilliseconds}ms. Hard Resync.',
+          'AudioPlayerService: hard resync "${entry.key}" '
+          '(${drift.inMilliseconds}ms drift)',
         );
         await _resyncAll(primaryPosition);
         return;
       }
 
-      // If drift exceeds normal tolerance, do a "soft catch-up" (non-disruptive)
       if (drift > AppConstants.syncTolerance) {
         debugPrint(
-          'SOFT SYNC: Track $trackName catching up (${drift.inMilliseconds}ms)',
+          'AudioPlayerService: soft resync "${entry.key}" '
+          '(${drift.inMilliseconds}ms drift)',
         );
-        // Just seek this specific track, don't pause others
         await player.seek(primaryPosition);
       }
     }
   }
 
-  /// Performs a hard resync (pauses all for safety)
   Future<void> _resyncAll(Duration position) async {
-    // Only used if drift is very high
     await Future.wait(_players.values.map((p) => p.pause()));
     await Future.wait(_players.values.map((p) => p.seek(position)));
     await Future.wait(_players.values.map((p) => p.play()));
   }
 
-  /// Disposes all audio players
   Future<void> _disposeAllPlayers() async {
     await _syncSubscription?.cancel();
     _syncSubscription = null;
-
     for (final player in _players.values) {
       await player.dispose();
     }
@@ -284,7 +305,6 @@ class AudioPlayerService {
     _primaryPlayer = null;
   }
 
-  /// Disposes the service and cleans up resources
   Future<void> dispose() async {
     await _disposeAllPlayers();
     await _positionController.close();

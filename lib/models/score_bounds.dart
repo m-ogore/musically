@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// The root coordinate mapping for a specific hymn's image.
 class ScoreBoundsData {
   final double imageWidth;

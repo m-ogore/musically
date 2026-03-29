@@ -9,6 +9,7 @@ class HymnRepository {
   List<Hymn>? _cachedHymns;
   static const String _defaultSupabaseUrl =
       'https://qxxdjnjljblzfdesdxyl.supabase.co';
+  static const String _defaultAudioBucket = 'audio';
   Set<String>? _assetKeys;
   bool _assetManifestAvailable = false;
   Map<String, String>? _scoreImageByHymnId;
@@ -53,11 +54,9 @@ class HymnRepository {
     final bool hasAudio = json['hasAudio'] ?? false;
     final bool hasMusicXml = json['hasMusicXml'] ?? false;
 
-    // Construct dynamic paths using Supabase Storage public URLs
+    // Construct dynamic paths using Supabase Storage public URLs.
     // Base URL structure: https://[project_id].supabase.co/storage/v1/object/public/[bucket]/[path]
-    final String supabaseUrl = _resolveSupabaseUrl();
-    final String supabaseBaseUrl =
-        '$supabaseUrl/storage/v1/object/public/audio';
+    final String supabaseBaseUrl = _resolveSupabaseAudioBaseUrl();
 
     final Map<String, String> audioPaths = hasAudio
         ? {
@@ -114,6 +113,26 @@ class HymnRepository {
     }
 
     return _defaultSupabaseUrl;
+  }
+
+  String _resolveSupabaseAudioBaseUrl() {
+    try {
+      final String? explicitBase = dotenv.env['SUPABASE_AUDIO_BASE_URL'];
+      if (explicitBase != null && explicitBase.isNotEmpty) {
+        return explicitBase;
+      }
+
+      final String? audioBucket = dotenv.env['SUPABASE_AUDIO_BUCKET'];
+      final String bucket =
+          (audioBucket != null && audioBucket.isNotEmpty)
+          ? audioBucket
+          : _defaultAudioBucket;
+
+      return '${_resolveSupabaseUrl()}/storage/v1/object/public/$bucket';
+    } catch (_) {
+      // dotenv may be unavailable in builds where .env is not bundled.
+      return '${_resolveSupabaseUrl()}/storage/v1/object/public/$_defaultAudioBucket';
+    }
   }
 
   Future<void> _ensureAssetKeysLoaded() async {
